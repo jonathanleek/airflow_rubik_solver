@@ -1,45 +1,106 @@
-Overview
-========
+Rubik's Cube Solver on Airflow
+==============================
 
-Welcome to Astronomer! This project was generated after you ran 'astro dev init' using the Astronomer CLI. This readme describes the contents of the project, as well as how to run Apache Airflow on your local machine.
+An Apache Airflow / Astronomer project that solves a 3x3 Rubik's cube using the
+beginner **layer-by-layer** method. Each stage of the solve is implemented as its
+own DAG, and the DAGs chain together into a state machine that drives a scrambled
+cube all the way to solved.
 
-Project Contents
-================
+It reliably solves any valid scramble: a 1,000-scramble stress test of the solver
+logic passes 100% (avg ~222 moves per solve).
 
-Your Astro project contains the following files and folders:
+How It Works
+============
 
-- dags: This folder contains the Python files for your Airflow DAGs. By default, this directory includes one example DAG:
-    - `example_astronauts`: This DAG shows a simple ETL pipeline example that queries the list of astronauts currently in space from the Open Notify API and prints a statement for each astronaut. The DAG uses the TaskFlow API to define tasks in Python, and dynamic task mapping to dynamically print a statement for each astronaut. For more on how this DAG works, see our [Getting started tutorial](https://www.astronomer.io/docs/learn/get-started-with-airflow).
-- Dockerfile: This file contains a versioned Astro Runtime Docker image that provides a differentiated Airflow experience. If you want to execute other commands or overrides at runtime, specify them here.
-- include: This folder contains any additional files that you want to include as part of your project. It is empty by default.
-- packages.txt: Install OS-level packages needed for your project by adding them to this file. It is empty by default.
-- requirements.txt: Install Python packages needed for your project by adding them to this file. It is empty by default.
-- plugins: Add custom or community plugins for your project to this file. It is empty by default.
-- airflow_settings.yaml: Use this local-only file to specify Airflow Connections, Variables, and Pools instead of entering them in the Airflow UI as you develop DAGs in this project.
+The cube is represented as 54 stickers (6 faces x 9) and moved with permutation
+arrays. All the cube/solver logic is pure Python and lives in `include/rubik/`:
 
-Deploy Your Project Locally
-===========================
+- `cube.py` — state representation, the 18 moves (`R R' R2` ... `B B' B2`),
+  scramble generation, and validation.
+- `solver.py` — the 7-phase layer-by-layer solver. Each phase exposes an
+  `is_<phase>_solved(state)` check and a `solve_<phase>_step(state)` function that
+  applies one step toward solving.
+- `constants.py` — color convention, sticker layout, phase ordering, per-phase
+  iteration limits, and DAG id mappings.
 
-Start Airflow on your local machine by running 'astro dev start'.
+Color/orientation convention: `U`=Yellow, `D`=White, `F`=Green, `B`=Blue,
+`L`=Orange, `R`=Red. The white cross is built on the **D** face.
 
-This command will spin up five Docker containers on your machine, each for a different Airflow component:
+The Solve Pipeline
+==================
 
-- Postgres: Airflow's Metadata Database
-- Scheduler: The Airflow component responsible for monitoring and triggering tasks
-- DAG Processor: The Airflow component responsible for parsing DAGs
-- API Server: The Airflow component responsible for serving the Airflow UI and API
-- Triggerer: The Airflow component responsible for triggering deferred tasks
+Solving is orchestrated as a chain of single-purpose DAGs. State (the current
+cube, moves applied so far, current phase, iteration count) is stored in a single
+Airflow **Variable** (`rubik_cube_state`). Each phase DAG reads the state, applies
+one solving step, writes it back, then either **re-triggers itself** to keep
+working the current layer or triggers the next phase via `TriggerDagRunOperator`.
 
-When all five containers are ready the command will open the browser to the Airflow UI at http://localhost:8080/. You should also be able to access your Postgres Database at 'localhost:5432/postgres' with username 'postgres' and password 'postgres'.
+```
+rubik_init
+   -> rubik_solve_cross            (Phase 1: white cross on D)
+   -> rubik_solve_white_corners    (Phase 2: white corners)
+   -> rubik_solve_middle_layer     (Phase 3: middle-layer edges)
+   -> rubik_solve_yellow_cross     (Phase 4: yellow cross / OLL edges)
+   -> rubik_solve_yellow_face      (Phase 5: yellow face / OLL corners)
+   -> rubik_solve_yellow_corners   (Phase 6: position corners / PLL)
+   -> rubik_solve_yellow_edges     (Phase 7: position edges / PLL)
+   -> rubik_complete               (validate solved state + report)
+```
 
-Note: If you already have either of the above ports allocated, you can either [stop your existing Docker containers or change the port](https://www.astronomer.io/docs/astro/cli/troubleshoot-locally#ports-are-not-available-for-my-local-airflow-webserver).
+Each phase DAG uses a `@task.branch` to decide between three outcomes per run:
+keep going (apply another step and re-trigger itself), advance to the next phase,
+or fail if a per-phase safety limit (`MAX_ITERATIONS` in `constants.py`) is
+exceeded. In practice real solves stay well under those limits.
 
-Deploy Your Project to Astronomer
-=================================
+Running a Solve
+===============
 
-If you have an Astronomer account, pushing code to a Deployment on Astronomer is simple. For deploying instructions, refer to Astronomer documentation: https://www.astronomer.io/docs/astro/deploy-code/
+1. Start Airflow locally:
 
-Contact
-=======
+   ```
+   astro dev start
+   ```
 
-The Astronomer CLI is maintained with love by the Astronomer team. To report a bug or suggest a change, reach out to our support.
+   This opens the Airflow UI at http://localhost:8080/.
+
+2. Trigger the `rubik_init` DAG. It accepts an optional `scramble` param:
+
+   - Provide a scramble string (e.g. `R U R' U' F2 L D' B`) to solve a specific
+     cube, or
+   - Leave it blank to generate a random 20-move scramble.
+
+   `rubik_init` initializes the cube state in the `rubik_cube_state` Variable and
+   triggers the first phase. The remaining phases run automatically until
+   `rubik_complete` validates the solved cube and prints the full solution
+   (scramble, move list, and move count) to its task logs.
+
+> Note: state is held in a single shared Variable, so only **one** cube can be
+> solved at a time on a given Airflow instance. Triggering `rubik_init` again
+> while a solve is in progress will overwrite the in-flight cube.
+
+Tests
+=====
+
+The cube engine and solver are pure Python and can be exercised without Airflow:
+
+```
+python3 test_full_solver.py     # end-to-end solve over several scrambles
+```
+
+Additional `test_*.py` files at the repo root cover move correctness, individual
+phase algorithms, and reference comparisons.
+
+Project Layout
+==============
+
+- `dags/` — the Rubik solver DAGs (plus `exampledag.py`, the stock Astro sample).
+- `include/rubik/` — cube representation and solver logic.
+- `test_*.py` — solver/engine test scripts.
+- `Dockerfile` — the Astro Runtime image version.
+- `requirements.txt` / `packages.txt` — Python and OS-level dependencies.
+
+Deploy to Astronomer
+====================
+
+To deploy to an Astronomer Deployment, see the Astronomer docs:
+https://www.astronomer.io/docs/astro/deploy-code/

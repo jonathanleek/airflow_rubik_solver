@@ -2,8 +2,7 @@
 
 import json
 
-from airflow.decorators import dag, task
-from airflow.models import Variable
+from airflow.sdk import dag, task, Variable
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
 from include.rubik.constants import AIRFLOW_VARIABLE_KEY, PHASE_DAG_IDS

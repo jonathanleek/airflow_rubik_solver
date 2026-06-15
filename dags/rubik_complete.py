@@ -2,8 +2,7 @@
 
 import json
 
-from airflow.decorators import dag, task
-from airflow.models import Variable
+from airflow.sdk import dag, task, Variable
 
 from include.rubik.constants import AIRFLOW_VARIABLE_KEY
 from include.rubik.cube import is_solved
