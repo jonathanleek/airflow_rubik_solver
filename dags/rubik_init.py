@@ -1,11 +1,9 @@
 """Entry point DAG: parse input or generate random scramble, write state to Variable."""
 
-import json
-
-from airflow.sdk import dag, task, Variable
+from airflow.sdk import dag, task
 from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 
-from include.rubik.constants import AIRFLOW_VARIABLE_KEY, PHASE_DAG_IDS
+from include.rubik.constants import PHASE_DAG_IDS
 from include.rubik.cube import (
     apply_algorithm,
     generate_scramble,
@@ -13,6 +11,7 @@ from include.rubik.cube import (
     parse_scramble_string,
     validate_state,
 )
+from include.rubik.state import save_current_state, start_session
 
 
 @dag(
@@ -27,7 +26,9 @@ def rubik_init():
     @task
     def initialize_cube(**context):
         params = context["params"]
-        scramble_input = params.get("scramble", "")
+        dag_run = context.get("dag_run")
+        dag_run_conf = dag_run.conf if dag_run and dag_run.conf else {}
+        scramble_input = dag_run_conf.get("scramble") or params.get("scramble", "")
 
         cube = get_solved_state()
 
@@ -43,7 +44,10 @@ def rubik_init():
 
         validate_state(cube)
 
+        session_id = dag_run.run_id if dag_run else "manual"
         state = {
+            "session_id": session_id,
+            "status": "running",
             "cube": cube,
             "moves_applied": [],
             "scramble": scramble_moves,
@@ -52,7 +56,8 @@ def rubik_init():
             "total_moves": 0,
         }
 
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
+        start_session(session_id, state)
         return f"Initialized cube with scramble: {' '.join(scramble_moves)}"
 
     init = initialize_cube()

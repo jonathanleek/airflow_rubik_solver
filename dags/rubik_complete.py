@@ -1,11 +1,9 @@
 """Final validation DAG: verify solved state and report solution."""
 
-import json
+from airflow.sdk import dag, task
 
-from airflow.sdk import dag, task, Variable
-
-from include.rubik.constants import AIRFLOW_VARIABLE_KEY
 from include.rubik.cube import is_solved
+from include.rubik.state import load_current_state, mark_session_complete
 
 
 @dag(
@@ -18,8 +16,7 @@ from include.rubik.cube import is_solved
 def rubik_complete():
     @task
     def read_state():
-        raw = Variable.get(AIRFLOW_VARIABLE_KEY)
-        return json.loads(raw)
+        return load_current_state()
 
     @task
     def validate_solution(state):
@@ -44,7 +41,7 @@ def rubik_complete():
         print(report)
 
         state["phase"] = "complete"
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        mark_session_complete(state, "rubik_complete", "validate_solution")
 
         return report
 

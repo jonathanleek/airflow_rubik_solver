@@ -1,12 +1,10 @@
 """Phase 4: Solve the yellow cross on the U face (OLL edges)."""
 
-import json
-
-from airflow.sdk import dag, task, Variable
+from airflow.sdk import dag, task
 from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 
+from include.rubik.state import load_current_state, mark_session_failed, record_move_snapshots, record_snapshot, save_current_state
 from include.rubik.constants import (
-    AIRFLOW_VARIABLE_KEY,
     MAX_ITERATIONS,
     NEXT_PHASE,
     PHASE_DAG_IDS,
@@ -28,8 +26,7 @@ from include.rubik.solver import (
 def rubik_solve_yellow_cross():
     @task
     def read_state():
-        raw = Variable.get(AIRFLOW_VARIABLE_KEY)
-        return json.loads(raw)
+        return load_current_state()
 
     @task.branch
     def check_phase_solved(state):
@@ -57,33 +54,36 @@ def rubik_solve_yellow_cross():
     def apply_dot(state):
         cube = state["cube"]
         new_cube, moves = solve_yellow_cross_step(cube)
+        record_move_snapshots(state, "rubik_solve_yellow_cross", "apply_dot", moves, "running")
         state["cube"] = new_cube
         state["moves_applied"].extend(moves)
         state["total_moves"] += len(moves)
         state["iteration"] = state.get("iteration", 0) + 1
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
         return f"Dot case: applied {len(moves)} moves"
 
     @task
     def apply_l_shape(state):
         cube = state["cube"]
         new_cube, moves = solve_yellow_cross_step(cube)
+        record_move_snapshots(state, "rubik_solve_yellow_cross", "apply_l_shape", moves, "running")
         state["cube"] = new_cube
         state["moves_applied"].extend(moves)
         state["total_moves"] += len(moves)
         state["iteration"] = state.get("iteration", 0) + 1
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
         return f"L-shape case: applied {len(moves)} moves"
 
     @task
     def apply_line(state):
         cube = state["cube"]
         new_cube, moves = solve_yellow_cross_step(cube)
+        record_move_snapshots(state, "rubik_solve_yellow_cross", "apply_line", moves, "running")
         state["cube"] = new_cube
         state["moves_applied"].extend(moves)
         state["total_moves"] += len(moves)
         state["iteration"] = state.get("iteration", 0) + 1
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
         return f"Line case: applied {len(moves)} moves"
 
     @task
@@ -91,14 +91,15 @@ def rubik_solve_yellow_cross():
         next_phase = NEXT_PHASE["yellow_cross"]
         state["phase"] = next_phase
         state["iteration"] = 0
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
+        record_snapshot(state, "rubik_solve_yellow_cross", "prepare_next_phase", [], "running")
         return f"Yellow cross solved! Moving to {next_phase}"
 
     @task
-    def max_iterations_exceeded():
-        raise Exception(
-            f"Yellow cross phase exceeded max iterations ({MAX_ITERATIONS['yellow_cross']})"
-        )
+    def max_iterations_exceeded(state):
+        reason = f"Yellow cross phase exceeded max iterations ({MAX_ITERATIONS['yellow_cross']})"
+        mark_session_failed(state, "rubik_solve_yellow_cross", "max_iterations_exceeded", reason)
+        raise Exception(reason)
 
     state = read_state()
     branch = check_phase_solved(state)
@@ -108,7 +109,7 @@ def rubik_solve_yellow_cross():
     l_step = apply_l_shape(state)
     line_step = apply_line(state)
     next_phase = prepare_next_phase(state)
-    max_iter = max_iterations_exceeded()
+    max_iter = max_iterations_exceeded(state)
 
     trigger_self = TriggerDagRunOperator(
         task_id="trigger_self",

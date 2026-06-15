@@ -10,6 +10,7 @@ from include.rubik.cube import (
 )
 from include.rubik.constants import (
     AIRFLOW_VARIABLE_KEY,
+    RUBIK_HISTORY_VARIABLE_KEY,
     COLORS,
     MAX_ITERATIONS,
     NEXT_PHASE,
@@ -26,6 +27,7 @@ __all__ = [
     "is_solved",
     "validate_state",
     "AIRFLOW_VARIABLE_KEY",
+    "RUBIK_HISTORY_VARIABLE_KEY",
     "COLORS",
     "MAX_ITERATIONS",
     "NEXT_PHASE",

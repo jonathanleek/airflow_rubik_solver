@@ -1,12 +1,10 @@
 """Phase 3: Solve the middle layer edges."""
 
-import json
-
-from airflow.sdk import dag, task, Variable
+from airflow.sdk import dag, task
 from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 
+from include.rubik.state import load_current_state, mark_session_failed, record_move_snapshots, record_snapshot, save_current_state
 from include.rubik.constants import (
-    AIRFLOW_VARIABLE_KEY,
     MAX_ITERATIONS,
     NEXT_PHASE,
     PHASE_DAG_IDS,
@@ -28,8 +26,7 @@ from include.rubik.solver import (
 def rubik_solve_middle_layer():
     @task
     def read_state():
-        raw = Variable.get(AIRFLOW_VARIABLE_KEY)
-        return json.loads(raw)
+        return load_current_state()
 
     @task.branch
     def check_phase_solved(state):
@@ -56,22 +53,24 @@ def rubik_solve_middle_layer():
     def apply_insert(state):
         cube = state["cube"]
         new_cube, moves = solve_middle_step(cube)
+        record_move_snapshots(state, "rubik_solve_middle_layer", "apply_insert", moves, "running")
         state["cube"] = new_cube
         state["moves_applied"].extend(moves)
         state["total_moves"] += len(moves)
         state["iteration"] = state.get("iteration", 0) + 1
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
         return f"Insert: applied {len(moves)} moves"
 
     @task
     def apply_eject(state):
         cube = state["cube"]
         new_cube, moves = solve_middle_step(cube)
+        record_move_snapshots(state, "rubik_solve_middle_layer", "apply_eject", moves, "running")
         state["cube"] = new_cube
         state["moves_applied"].extend(moves)
         state["total_moves"] += len(moves)
         state["iteration"] = state.get("iteration", 0) + 1
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
         return f"Eject: applied {len(moves)} moves"
 
     @task
@@ -79,14 +78,15 @@ def rubik_solve_middle_layer():
         next_phase = NEXT_PHASE["middle_layer"]
         state["phase"] = next_phase
         state["iteration"] = 0
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
+        record_snapshot(state, "rubik_solve_middle_layer", "prepare_next_phase", [], "running")
         return f"Middle layer solved! Moving to {next_phase}"
 
     @task
-    def max_iterations_exceeded():
-        raise Exception(
-            f"Middle layer phase exceeded max iterations ({MAX_ITERATIONS['middle_layer']})"
-        )
+    def max_iterations_exceeded(state):
+        reason = f"Middle layer phase exceeded max iterations ({MAX_ITERATIONS['middle_layer']})"
+        mark_session_failed(state, "rubik_solve_middle_layer", "max_iterations_exceeded", reason)
+        raise Exception(reason)
 
     state = read_state()
     branch = check_phase_solved(state)
@@ -95,7 +95,7 @@ def rubik_solve_middle_layer():
     insert_step = apply_insert(state)
     eject_step = apply_eject(state)
     next_phase = prepare_next_phase(state)
-    max_iter = max_iterations_exceeded()
+    max_iter = max_iterations_exceeded(state)
 
     trigger_self = TriggerDagRunOperator(
         task_id="trigger_self",
