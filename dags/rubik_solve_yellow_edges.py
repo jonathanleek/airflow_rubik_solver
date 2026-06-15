@@ -1,13 +1,10 @@
 """Phase 7: Position yellow edges (PLL edges)."""
 
-import json
+from airflow.sdk import dag, task
+from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 
-from airflow.decorators import dag, task
-from airflow.models import Variable
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-
+from include.rubik.state import load_current_state, mark_session_failed, record_move_snapshots, record_snapshot, save_current_state
 from include.rubik.constants import (
-    AIRFLOW_VARIABLE_KEY,
     MAX_ITERATIONS,
     NEXT_PHASE,
     PHASE_DAG_IDS,
@@ -29,8 +26,7 @@ from include.rubik.solver import (
 def rubik_solve_yellow_edges():
     @task
     def read_state():
-        raw = Variable.get(AIRFLOW_VARIABLE_KEY)
-        return json.loads(raw)
+        return load_current_state()
 
     @task.branch
     def check_phase_solved(state):
@@ -59,44 +55,48 @@ def rubik_solve_yellow_edges():
     def apply_cw_cycle(state):
         cube = state["cube"]
         new_cube, moves = solve_yellow_edges_step(cube)
+        record_move_snapshots(state, "rubik_solve_yellow_edges", "apply_cw_cycle", moves, "running")
         state["cube"] = new_cube
         state["moves_applied"].extend(moves)
         state["total_moves"] += len(moves)
         state["iteration"] = state.get("iteration", 0) + 1
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
         return f"CW cycle: applied {len(moves)} moves"
 
     @task
     def apply_ccw_cycle(state):
         cube = state["cube"]
         new_cube, moves = solve_yellow_edges_step(cube)
+        record_move_snapshots(state, "rubik_solve_yellow_edges", "apply_ccw_cycle", moves, "running")
         state["cube"] = new_cube
         state["moves_applied"].extend(moves)
         state["total_moves"] += len(moves)
         state["iteration"] = state.get("iteration", 0) + 1
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
         return f"CCW cycle: applied {len(moves)} moves"
 
     @task
     def apply_opposite_swap(state):
         cube = state["cube"]
         new_cube, moves = solve_yellow_edges_step(cube)
+        record_move_snapshots(state, "rubik_solve_yellow_edges", "apply_opposite_swap", moves, "running")
         state["cube"] = new_cube
         state["moves_applied"].extend(moves)
         state["total_moves"] += len(moves)
         state["iteration"] = state.get("iteration", 0) + 1
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
         return f"Opposite swap: applied {len(moves)} moves"
 
     @task
     def apply_adjacent_swap(state):
         cube = state["cube"]
         new_cube, moves = solve_yellow_edges_step(cube)
+        record_move_snapshots(state, "rubik_solve_yellow_edges", "apply_adjacent_swap", moves, "running")
         state["cube"] = new_cube
         state["moves_applied"].extend(moves)
         state["total_moves"] += len(moves)
         state["iteration"] = state.get("iteration", 0) + 1
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
         return f"Adjacent swap: applied {len(moves)} moves"
 
     @task
@@ -104,14 +104,15 @@ def rubik_solve_yellow_edges():
         next_phase = NEXT_PHASE["yellow_edges"]
         state["phase"] = next_phase
         state["iteration"] = 0
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
+        record_snapshot(state, "rubik_solve_yellow_edges", "prepare_next_phase", [], "running")
         return f"Yellow edges positioned! Moving to {next_phase}"
 
     @task
-    def max_iterations_exceeded():
-        raise Exception(
-            f"Yellow edges phase exceeded max iterations ({MAX_ITERATIONS['yellow_edges']})"
-        )
+    def max_iterations_exceeded(state):
+        reason = f"Yellow edges phase exceeded max iterations ({MAX_ITERATIONS['yellow_edges']})"
+        mark_session_failed(state, "rubik_solve_yellow_edges", "max_iterations_exceeded", reason)
+        raise Exception(reason)
 
     state = read_state()
     branch = check_phase_solved(state)
@@ -122,7 +123,7 @@ def rubik_solve_yellow_edges():
     opp_step = apply_opposite_swap(state)
     adj_step = apply_adjacent_swap(state)
     next_phase = prepare_next_phase(state)
-    max_iter = max_iterations_exceeded()
+    max_iter = max_iterations_exceeded(state)
 
     trigger_self = TriggerDagRunOperator(
         task_id="trigger_self",

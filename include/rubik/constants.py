@@ -147,3 +147,4 @@ MOVE_NAMES = [
 ]
 
 AIRFLOW_VARIABLE_KEY = "rubik_cube_state"
+RUBIK_HISTORY_VARIABLE_KEY = "rubik_solver_history"

@@ -1,13 +1,10 @@
 """Phase 5: Solve the yellow face (OLL corners)."""
 
-import json
+from airflow.sdk import dag, task
+from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 
-from airflow.decorators import dag, task
-from airflow.models import Variable
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-
+from include.rubik.state import load_current_state, mark_session_failed, record_move_snapshots, record_snapshot, save_current_state
 from include.rubik.constants import (
-    AIRFLOW_VARIABLE_KEY,
     MAX_ITERATIONS,
     NEXT_PHASE,
     PHASE_DAG_IDS,
@@ -29,8 +26,7 @@ from include.rubik.solver import (
 def rubik_solve_yellow_face():
     @task
     def read_state():
-        raw = Variable.get(AIRFLOW_VARIABLE_KEY)
-        return json.loads(raw)
+        return load_current_state()
 
     @task.branch
     def check_phase_solved(state):
@@ -59,44 +55,48 @@ def rubik_solve_yellow_face():
     def apply_sune(state):
         cube = state["cube"]
         new_cube, moves = solve_yellow_face_step(cube)
+        record_move_snapshots(state, "rubik_solve_yellow_face", "apply_sune", moves, "running")
         state["cube"] = new_cube
         state["moves_applied"].extend(moves)
         state["total_moves"] += len(moves)
         state["iteration"] = state.get("iteration", 0) + 1
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
         return f"Sune: applied {len(moves)} moves"
 
     @task
     def apply_antisune(state):
         cube = state["cube"]
         new_cube, moves = solve_yellow_face_step(cube)
+        record_move_snapshots(state, "rubik_solve_yellow_face", "apply_antisune", moves, "running")
         state["cube"] = new_cube
         state["moves_applied"].extend(moves)
         state["total_moves"] += len(moves)
         state["iteration"] = state.get("iteration", 0) + 1
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
         return f"Antisune: applied {len(moves)} moves"
 
     @task
     def apply_no_fish(state):
         cube = state["cube"]
         new_cube, moves = solve_yellow_face_step(cube)
+        record_move_snapshots(state, "rubik_solve_yellow_face", "apply_no_fish", moves, "running")
         state["cube"] = new_cube
         state["moves_applied"].extend(moves)
         state["total_moves"] += len(moves)
         state["iteration"] = state.get("iteration", 0) + 1
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
         return f"No fish: applied {len(moves)} moves"
 
     @task
     def apply_no_corners(state):
         cube = state["cube"]
         new_cube, moves = solve_yellow_face_step(cube)
+        record_move_snapshots(state, "rubik_solve_yellow_face", "apply_no_corners", moves, "running")
         state["cube"] = new_cube
         state["moves_applied"].extend(moves)
         state["total_moves"] += len(moves)
         state["iteration"] = state.get("iteration", 0) + 1
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
         return f"No corners: applied {len(moves)} moves"
 
     @task
@@ -104,14 +104,15 @@ def rubik_solve_yellow_face():
         next_phase = NEXT_PHASE["yellow_face"]
         state["phase"] = next_phase
         state["iteration"] = 0
-        Variable.set(AIRFLOW_VARIABLE_KEY, json.dumps(state))
+        save_current_state(state)
+        record_snapshot(state, "rubik_solve_yellow_face", "prepare_next_phase", [], "running")
         return f"Yellow face solved! Moving to {next_phase}"
 
     @task
-    def max_iterations_exceeded():
-        raise Exception(
-            f"Yellow face phase exceeded max iterations ({MAX_ITERATIONS['yellow_face']})"
-        )
+    def max_iterations_exceeded(state):
+        reason = f"Yellow face phase exceeded max iterations ({MAX_ITERATIONS['yellow_face']})"
+        mark_session_failed(state, "rubik_solve_yellow_face", "max_iterations_exceeded", reason)
+        raise Exception(reason)
 
     state = read_state()
     branch = check_phase_solved(state)
@@ -122,7 +123,7 @@ def rubik_solve_yellow_face():
     no_fish_step = apply_no_fish(state)
     no_corners_step = apply_no_corners(state)
     next_phase = prepare_next_phase(state)
-    max_iter = max_iterations_exceeded()
+    max_iter = max_iterations_exceeded(state)
 
     trigger_self = TriggerDagRunOperator(
         task_id="trigger_self",
