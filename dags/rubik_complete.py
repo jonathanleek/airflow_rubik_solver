@@ -3,6 +3,7 @@
 from airflow.sdk import dag, task
 
 from include.rubik.cube import is_solved
+from include.rubik.lineage import phase_handoff_asset
 from include.rubik.state import load_current_state, mark_session_complete
 
 
@@ -14,7 +15,7 @@ from include.rubik.state import load_current_state, mark_session_complete
     tags=["rubik"],
 )
 def rubik_complete():
-    @task
+    @task(inlets=[phase_handoff_asset("complete")])
     def read_state():
         return load_current_state()
 

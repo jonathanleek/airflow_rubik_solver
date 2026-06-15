@@ -3,6 +3,7 @@
 from airflow.sdk import dag, task
 from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 
+from include.rubik.lineage import phase_handoff_asset
 from include.rubik.state import load_current_state, mark_session_failed, record_move_snapshots, record_snapshot, save_current_state
 from include.rubik.constants import (
     MAX_ITERATIONS,
@@ -24,7 +25,7 @@ from include.rubik.solver import (
     tags=["rubik", "solve"],
 )
 def rubik_solve_yellow_corners():
-    @task
+    @task(inlets=[phase_handoff_asset("yellow_corners")])
     def read_state():
         return load_current_state()
 
@@ -109,6 +110,7 @@ def rubik_solve_yellow_corners():
         trigger_dag_id=PHASE_DAG_IDS[NEXT_PHASE["yellow_corners"]],
         wait_for_completion=False,
         trigger_rule="none_failed_min_one_success",
+        outlets=[phase_handoff_asset(NEXT_PHASE["yellow_corners"])],
     )
 
     branch >> [case_branch, next_phase, max_iter]

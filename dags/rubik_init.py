@@ -11,6 +11,7 @@ from include.rubik.cube import (
     parse_scramble_string,
     validate_state,
 )
+from include.rubik.lineage import phase_handoff_asset
 from include.rubik.state import save_current_state, start_session
 
 
@@ -66,6 +67,7 @@ def rubik_init():
         task_id="trigger_solve_cross",
         trigger_dag_id=PHASE_DAG_IDS["cross"],
         wait_for_completion=False,
+        outlets=[phase_handoff_asset("cross")],
     )
 
     init >> trigger_cross
