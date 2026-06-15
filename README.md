@@ -29,11 +29,13 @@ Color/orientation convention: `U`=Yellow, `D`=White, `F`=Green, `B`=Blue,
 The Solve Pipeline
 ==================
 
-Solving is orchestrated as a chain of single-purpose DAGs. State (the current
-cube, moves applied so far, current phase, iteration count) is stored in a single
-Airflow **Variable** (`rubik_cube_state`). Each phase DAG reads the state, applies
-one solving step, writes it back, then either **re-triggers itself** to keep
-working the current layer or triggers the next phase via `TriggerDagRunOperator`.
+Solving is orchestrated as a chain of single-purpose DAGs. Current state (the
+cube, moves applied so far, current phase, iteration count) is stored in the
+Airflow **Variable** `rubik_cube_state`. Visualization history is stored in
+`rubik_solver_history`. Each phase DAG reads the state, applies one solving step,
+writes it back, records move-level snapshots for the plugin, then either
+**re-triggers itself** to keep working the current layer or triggers the next
+phase via `TriggerDagRunOperator`.
 
 ```
 rubik_init
@@ -52,6 +54,56 @@ keep going (apply another step and re-trigger itself), advance to the next phase
 or fail if a per-phase safety limit (`MAX_ITERATIONS` in `constants.py`) is
 exceeded. In practice real solves stay well under those limits.
 
+Rubik Solver Plugin
+===================
+
+This project includes an Airflow 3 plugin at `plugins/rubik-solver/` that adds a
+Rubik Solver dashboard to the Airflow UI.
+
+The plugin registers:
+
+- A FastAPI app mounted at `/rubik-solver`.
+- A navigation item at **Browse → Rubik Solver**.
+- A static dashboard that renders the current cube as an unfolded net.
+- A history timeline with one snapshot per solver move.
+- `Play` and `Live` controls to animate the solve or return to polling current
+  state.
+- A DAG run tracker for all Rubik phase DAGs.
+- A guarded `Start New Solve` button that triggers `rubik_init` through the
+  Airflow REST API.
+
+Plugin endpoints:
+
+```
+GET  /rubik-solver/ui
+GET  /rubik-solver/api/state
+GET  /rubik-solver/api/history
+GET  /rubik-solver/api/dag-runs
+POST /rubik-solver/api/start
+```
+
+To enable the start button locally, add these values to `.env` and restart
+Airflow:
+
+```
+RUBIK_SOLVER_ENABLE_START=true
+RUBIK_SOLVER_AIRFLOW_API_URL=http://localhost:8080
+RUBIK_SOLVER_USERNAME=admin
+RUBIK_SOLVER_PASSWORD=admin
+```
+
+For Astro deployments, prefer a Deployment API token instead of username/password:
+
+```
+RUBIK_SOLVER_ENABLE_START=true
+RUBIK_SOLVER_AIRFLOW_API_URL=https://<deployment-airflow-url>
+RUBIK_SOLVER_TOKEN=<deployment-api-token>
+```
+
+Python plugin changes require restarting the Airflow API server. Static
+HTML/CSS/JS changes are picked up without changing DAG code, but a restart is the
+safest local development workflow.
+
 Running a Solve
 ===============
 
@@ -69,14 +121,21 @@ Running a Solve
      cube, or
    - Leave it blank to generate a random 20-move scramble.
 
-   `rubik_init` initializes the cube state in the `rubik_cube_state` Variable and
-   triggers the first phase. The remaining phases run automatically until
-   `rubik_complete` validates the solved cube and prints the full solution
-   (scramble, move list, and move count) to its task logs.
+   `rubik_init` initializes the cube state in the `rubik_cube_state` Variable,
+   initializes a session in `rubik_solver_history`, and triggers the first phase.
+   The remaining phases run automatically until `rubik_complete` validates the
+   solved cube and prints the full solution (scramble, move list, and move count)
+   to its task logs.
 
-> Note: state is held in a single shared Variable, so only **one** cube can be
-> solved at a time on a given Airflow instance. Triggering `rubik_init` again
-> while a solve is in progress will overwrite the in-flight cube.
+3. Open **Browse → Rubik Solver** in the Airflow UI to watch the solve. The
+   dashboard refreshes current state while DAGs run, records every move in the
+   history timeline, and can replay the solve with the `Play` button.
+
+> Note: the active state is still held in a single shared Variable, so only
+> **one** cube should be solved at a time on a given Airflow instance. Triggering
+> `rubik_init` again while a solve is in progress will overwrite the active cube,
+> though previous history sessions remain in `rubik_solver_history` until the
+> Variable is reset.
 
 Tests
 =====
@@ -94,7 +153,9 @@ Project Layout
 ==============
 
 - `dags/` — the Rubik solver DAGs (plus `exampledag.py`, the stock Astro sample).
-- `include/rubik/` — cube representation and solver logic.
+- `include/rubik/` — cube representation, solver logic, and Variable-backed
+  state/history helpers.
+- `plugins/rubik-solver/` — Airflow 3 FastAPI plugin and static dashboard.
 - `test_*.py` — solver/engine test scripts.
 - `Dockerfile` — the Astro Runtime image version.
 - `requirements.txt` / `packages.txt` — Python and OS-level dependencies.
