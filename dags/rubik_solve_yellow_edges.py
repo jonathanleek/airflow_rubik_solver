@@ -3,7 +3,7 @@
 import json
 
 from airflow.sdk import dag, task, Variable
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 
 from include.rubik.constants import (
     AIRFLOW_VARIABLE_KEY,
