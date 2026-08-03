@@ -58,42 +58,61 @@ Rubik Solver Plugin
 ===================
 
 This project includes an Airflow 3 plugin at `plugins/rubik-solver/` that adds a
-Rubik Solver dashboard to the Airflow UI.
+Rubik Solver dashboard to the Airflow UI. The dashboard is served by a FastAPI
+app mounted at `/rubik-solver` and is available locally at:
+
+```
+http://airflow-rubik-solver.localhost:6563/rubik-solver/ui
+```
 
 The plugin registers:
 
-- A FastAPI app mounted at `/rubik-solver`.
-- A navigation item at **Browse → Rubik Solver**.
-- A static dashboard that renders the current cube as an unfolded net.
+- A **Browse → Rubik Solver** navigation item.
+- A top-level **Open Rubik Solver** navigation shortcut.
+- A dashboard React shortcut button that links to the same dashboard page.
+- A static cube dashboard that renders the current cube as an unfolded net.
 - A history timeline with one snapshot per solver move.
 - `Play` and `Live` controls to animate the solve or return to polling current
   state.
 - A DAG run tracker for all Rubik phase DAGs.
-- A guarded `Start New Solve` button that triggers `rubik_init` through the
-  Airflow REST API.
+- A guarded `Start New Solve` button that triggers the `rubik_init` DAG.
 
 Plugin endpoints:
 
 ```
 GET  /rubik-solver/ui
+GET  /rubik-solver/dashboard-button.js
 GET  /rubik-solver/api/state
 GET  /rubik-solver/api/history
 GET  /rubik-solver/api/dag-runs
 POST /rubik-solver/api/start
 ```
 
-To enable the start button locally, add these values to `.env` and restart
-Airflow:
+Local defaults are set in `Dockerfile` so the plugin works after
+`astro dev start` without editing `.env`:
 
 ```
 RUBIK_SOLVER_ENABLE_START=true
 RUBIK_SOLVER_AIRFLOW_API_URL=http://localhost:8080
 RUBIK_SOLVER_USERNAME=admin
 RUBIK_SOLVER_PASSWORD=admin
-RUBIK_SOLVER_START_KEY=<local-start-key>
+RUBIK_SOLVER_START_KEY=dev
 ```
 
-For Astro deployments, prefer a Deployment API token instead of username/password:
+To start a solve from the dashboard, optionally enter a scramble, enter `dev` in
+the **Start key** field, and click **Start New Solve**. The plugin sends
+`POST /rubik-solver/api/start`, which triggers `rubik_init` through the Airflow
+REST API with this run configuration:
+
+```
+{"scramble": "<scramble input>"}
+```
+
+Leave the scramble input blank to generate a random 20-move scramble.
+
+For Astro deployments or any shared environment, override the local defaults.
+Prefer a Deployment API token instead of username/password, and set a non-trivial
+start key:
 
 ```
 RUBIK_SOLVER_ENABLE_START=true
@@ -102,10 +121,9 @@ RUBIK_SOLVER_TOKEN=<deployment-api-token>
 RUBIK_SOLVER_START_KEY=<start-key>
 ```
 
-Enter `RUBIK_SOLVER_START_KEY` in the dashboard's **Start key** field when using
-`Start New Solve`. Python plugin changes require restarting the Airflow API
-server. Static HTML/CSS/JS changes are picked up without changing DAG code, but a
-restart is the safest local development workflow.
+Python plugin changes require restarting the Airflow API server. Static
+HTML/CSS/JS changes are picked up without changing DAG code, but a restart is the
+safest local development workflow.
 
 Running a Solve
 ===============
