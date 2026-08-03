@@ -85,6 +85,11 @@ async def serve_ui():
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.get("/dashboard-button.js", response_class=FileResponse)
+async def serve_dashboard_button():
+    return FileResponse(STATIC_DIR / "dashboard-button.js", media_type="application/javascript")
+
+
 @app.get("/api/state")
 async def current_state():
     def _fetch():
@@ -174,5 +179,20 @@ class RubikSolverPlugin(AirflowPlugin):
             "destination": "nav",
             "category": "browse",
             "url_route": "rubik-solver",
+        },
+        {
+            "name": "Open Rubik Solver",
+            "href": "rubik-solver/ui",
+            "destination": "nav",
+            "url_route": "open-rubik-solver",
+        },
+    ]
+
+    react_apps = [
+        {
+            "name": "Rubik Solver Dashboard Button",
+            "bundle_url": "/rubik-solver/dashboard-button.js",
+            "destination": "dashboard",
+            "url_route": "rubik-solver-dashboard-button",
         }
     ]
