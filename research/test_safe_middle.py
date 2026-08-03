@@ -1,16 +1,32 @@
 """Find middle layer algorithms that PRESERVE already-solved middle edges."""
-import sys, copy
+
+import sys
+
 sys.path.insert(0, ".")
 
 from itertools import product
-from include.rubik.cube import apply_move, apply_algorithm, get_solved_state, generate_scramble
-from include.rubik.solver import (
-    is_cross_solved, solve_cross_step,
-    is_white_corners_solved, solve_white_corners_step,
-    _is_middle_edge_solved, _find_edge, _gs, _edge_layer,
-    _edge_side_face_in_u, _edge_color_on_face,
-    MIDDLE_EDGES, MIDDLE_EDGE_TARGETS, _FACE_ORDER, _COLOR_TO_FACE,
+from include.rubik.cube import (
+    apply_algorithm,
+    get_solved_state,
+    generate_scramble,
 )
+from include.rubik.solver import (
+    is_cross_solved,
+    solve_cross_step,
+    is_white_corners_solved,
+    solve_white_corners_step,
+    _is_middle_edge_solved,
+    _find_edge,
+    _gs,
+    _edge_layer,
+    _edge_side_face_in_u,
+    _edge_color_on_face,
+    MIDDLE_EDGES,
+    MIDDLE_EDGE_TARGETS,
+    _FACE_ORDER,
+    _COLOR_TO_FACE,
+)
+
 
 def solve_phase(state, check_fn, step_fn, max_iter=50):
     for _ in range(max_iter):
@@ -21,6 +37,7 @@ def solve_phase(state, check_fn, step_fn, max_iter=50):
             return state, False
     return state, check_fn(state)
 
+
 def d_layer_ok(state):
     if not all(state["D"][i] == "W" for i in range(9)):
         return False
@@ -29,6 +46,7 @@ def d_layer_ok(state):
             if state[face][idx] != color:
                 return False
     return True
+
 
 def other_middle_preserved(state, test_state, exclude_edge):
     """Check that all middle edges except exclude_edge are the same."""
@@ -41,7 +59,9 @@ def other_middle_preserved(state, test_state, exclude_edge):
                 return False
     return True
 
+
 import random
+
 random.seed(42)
 
 # Build test states for FR slot with both orientations
@@ -119,7 +139,9 @@ for key, state in test_states.items():
         continue
 
     print(f"\nSearching {key}...")
-    print(f"  Other middle edges preserved: FL={_is_middle_edge_solved(state, 'FL')}, BR={_is_middle_edge_solved(state, 'BR')}, BL={_is_middle_edge_solved(state, 'BL')}")
+    print(
+        f"  Other middle edges preserved: FL={_is_middle_edge_solved(state, 'FL')}, BR={_is_middle_edge_solved(state, 'BR')}, BL={_is_middle_edge_solved(state, 'BL')}"
+    )
 
     edge_positions = MIDDLE_EDGES["FR"]
     target_colors = MIDDLE_EDGE_TARGETS["FR"]
@@ -162,21 +184,41 @@ for key, state in test_states.items():
                 print(f"  FOUND ({length} moves): {alg_str}")
 
         if found:
-            print(f"  Total: {len(found)} solutions of length {length} (searched {count} combos)")
+            print(
+                f"  Total: {len(found)} solutions of length {length} (searched {count} combos)"
+            )
             break
         else:
             print(f"  Length {length}: {count} combos, no solution")
 
     if not found:
-        print(f"  NO SAFE ALGORITHM FOUND up to length 10!")
+        print("  NO SAFE ALGORITHM FOUND up to length 10!")
 
 # Also search using the full 18-move set for length 7-8
 for key, state in test_states.items():
     if state is None:
         continue
     print(f"\nExtended search for {key} (all 18 moves)...")
-    full_moves = ["U", "U'", "U2", "R", "R'", "R2", "F", "F'", "F2",
-                   "L", "L'", "L2", "D", "D'", "D2", "B", "B'", "B2"]
+    full_moves = [
+        "U",
+        "U'",
+        "U2",
+        "R",
+        "R'",
+        "R2",
+        "F",
+        "F'",
+        "F2",
+        "L",
+        "L'",
+        "L2",
+        "D",
+        "D'",
+        "D2",
+        "B",
+        "B'",
+        "B2",
+    ]
     edge_positions = MIDDLE_EDGES["FR"]
     target_colors = MIDDLE_EDGE_TARGETS["FR"]
 
@@ -223,4 +265,4 @@ for key, state in test_states.items():
             print(f"  Length {length}: searched {count} combos, no solution")
 
     if not found:
-        print(f"  NO SAFE ALGORITHM FOUND with full move set!")
+        print("  NO SAFE ALGORITHM FOUND with full move set!")

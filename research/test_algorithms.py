@@ -6,7 +6,7 @@ focusing on white corner insertion and middle layer F2L insertion.
 
 import copy
 from include.rubik.cube import apply_algorithm, get_solved_state, is_solved
-from include.rubik.constants import COLORS, FACES, SOLVED_STATE
+from include.rubik.constants import FACES, SOLVED_STATE
 
 
 def state_summary(state):
@@ -67,15 +67,16 @@ def cross_preserved(state):
     """Check if the white cross edges are still solved."""
     solved = SOLVED_STATE
     checks = [
-        ("D", 1), ("F", 7),  # DF
-        ("D", 5), ("R", 7),  # DR
-        ("D", 7), ("B", 7),  # DB
-        ("D", 3), ("L", 7),  # DL
+        ("D", 1),
+        ("F", 7),  # DF
+        ("D", 5),
+        ("R", 7),  # DR
+        ("D", 7),
+        ("B", 7),  # DB
+        ("D", 3),
+        ("L", 7),  # DL
     ]
-    for face, idx in checks:
-        if state[face][idx] != solved[face][idx]:
-            return False
-    return True
+    return all(state[face][idx] == solved[face][idx] for face, idx in checks)
 
 
 SEPARATOR = "=" * 70
@@ -88,23 +89,33 @@ def test_1():
     print(SEPARATOR)
 
     solved = get_solved_state()
-    print(f"\nSolved DFR corner: D[2]={solved['D'][2]}, F[8]={solved['F'][8]}, R[6]={solved['R'][6]}")
+    print(
+        f"\nSolved DFR corner: D[2]={solved['D'][2]}, F[8]={solved['F'][8]}, R[6]={solved['R'][6]}"
+    )
 
     # Apply U to bring DFR corner up to UFR
     setup, _ = apply_algorithm(solved, "U")
-    print(f"\nAfter U move (setup):")
-    print(f"  DFR corner: D[2]={setup['D'][2]}, F[8]={setup['F'][8]}, R[6]={setup['R'][6]}")
-    print(f"  UFR corner: U[8]={setup['U'][8]}, F[2]={setup['F'][2]}, R[0]={setup['R'][0]}")
+    print("\nAfter U move (setup):")
+    print(
+        f"  DFR corner: D[2]={setup['D'][2]}, F[8]={setup['F'][8]}, R[6]={setup['R'][6]}"
+    )
+    print(
+        f"  UFR corner: U[8]={setup['U'][8]}, F[2]={setup['F'][2]}, R[0]={setup['R'][0]}"
+    )
 
     # Apply "R U R' U'" repeatedly
     current = copy.deepcopy(setup)
     for rep in range(1, 7):
         current, moves = apply_algorithm(current, "R U R' U'")
         d2, f8, r6 = dfr_stickers(current)
-        is_correct = (d2 == "W" and f8 == "G" and r6 == "R")
+        is_correct = d2 == "W" and f8 == "G" and r6 == "R"
         print(f"\n  After rep {rep} of R U R' U':")
-        print(f"    DFR: D[2]={d2}, F[8]={f8}, R[6]={r6}  {'<-- SOLVED!' if is_correct else ''}")
-        print(f"    UFR: U[8]={current['U'][8]}, F[2]={current['F'][2]}, R[0]={current['R'][0]}")
+        print(
+            f"    DFR: D[2]={d2}, F[8]={f8}, R[6]={r6}  {'<-- SOLVED!' if is_correct else ''}"
+        )
+        print(
+            f"    UFR: U[8]={current['U'][8]}, F[2]={current['F'][2]}, R[0]={current['R'][0]}"
+        )
         if is_correct:
             print(f"    Corner correctly inserted after {rep} repetition(s)!")
             print(f"    Cross preserved: {cross_preserved(current)}")
@@ -118,26 +129,36 @@ def test_1():
 def test_2():
     """Test 2: White corner insertion with R U' R' U (the modified version in solver.py)."""
     print(SEPARATOR)
-    print("TEST 2: White corner insertion - 'R U' R' U' (modified version from solver.py)")
+    print(
+        "TEST 2: White corner insertion - 'R U' R' U' (modified version from solver.py)"
+    )
     print(SEPARATOR)
 
     solved = get_solved_state()
 
     # Apply U to bring DFR corner up to UFR
     setup, _ = apply_algorithm(solved, "U")
-    print(f"\nAfter U move (setup):")
-    print(f"  DFR corner: D[2]={setup['D'][2]}, F[8]={setup['F'][8]}, R[6]={setup['R'][6]}")
-    print(f"  UFR corner: U[8]={setup['U'][8]}, F[2]={setup['F'][2]}, R[0]={setup['R'][0]}")
+    print("\nAfter U move (setup):")
+    print(
+        f"  DFR corner: D[2]={setup['D'][2]}, F[8]={setup['F'][8]}, R[6]={setup['R'][6]}"
+    )
+    print(
+        f"  UFR corner: U[8]={setup['U'][8]}, F[2]={setup['F'][2]}, R[0]={setup['R'][0]}"
+    )
 
     # Apply "R U' R' U" repeatedly
     current = copy.deepcopy(setup)
     for rep in range(1, 7):
         current, moves = apply_algorithm(current, "R U' R' U")
         d2, f8, r6 = dfr_stickers(current)
-        is_correct = (d2 == "W" and f8 == "G" and r6 == "R")
+        is_correct = d2 == "W" and f8 == "G" and r6 == "R"
         print(f"\n  After rep {rep} of R U' R' U:")
-        print(f"    DFR: D[2]={d2}, F[8]={f8}, R[6]={r6}  {'<-- SOLVED!' if is_correct else ''}")
-        print(f"    UFR: U[8]={current['U'][8]}, F[2]={current['F'][2]}, R[0]={current['R'][0]}")
+        print(
+            f"    DFR: D[2]={d2}, F[8]={f8}, R[6]={r6}  {'<-- SOLVED!' if is_correct else ''}"
+        )
+        print(
+            f"    UFR: U[8]={current['U'][8]}, F[2]={current['F'][2]}, R[0]={current['R'][0]}"
+        )
         if is_correct:
             print(f"    Corner correctly inserted after {rep} repetition(s)!")
             print(f"    Cross preserved: {cross_preserved(current)}")
@@ -218,12 +239,12 @@ def test_4():
     gr_pos = None
     for name, uf, ui, sf, si in u_edges:
         if {setup[uf][ui], setup[sf][si]} == {"G", "R"}:
-            gr_pos = name
+            gr_pos = name  # noqa: F841
             print(f"\n  G/R edge found at {name}")
 
     # (a) Position edge above the F face using U rotations
-    current = copy.deepcopy(setup)
-    all_moves = []
+    current = copy.deepcopy(setup)  # noqa: F841
+    all_moves = []  # noqa: F841
 
     # We need G on the side face (F[1]) and R on U face, or vice versa
     # For insert-right, we need the side color to match the front center
@@ -242,7 +263,7 @@ def test_4():
         # For insert-right on F face, we need F[1] to match F center (G)
         # and U[7] to match R center (R) -- meaning the edge goes right
         if uf_f == "G" and uf_u == "R":
-            print(f"    --> This is correct setup for insert-right on F face!")
+            print("    --> This is correct setup for insert-right on F face!")
 
     # (b) Let's do the right U adjustment and apply insert-right
     # Try each U adjustment + insert
@@ -254,10 +275,12 @@ def test_4():
             test, _ = apply_algorithm(test, u_adj)
         test, _ = apply_algorithm(test, insert_alg)
         f5, r3 = fr_stickers(test)
-        fr_ok = (f5 == "G" and r3 == "R")
+        fr_ok = f5 == "G" and r3 == "R"
         d_ok = d_layer_preserved(test)
         cross_ok = cross_preserved(test)
-        print(f"    U_adj='{u_adj or 'none'}' + insert: FR=F[5]={f5},R[3]={r3}  FR_ok={fr_ok}  D_ok={d_ok}  cross_ok={cross_ok}")
+        print(
+            f"    U_adj='{u_adj or 'none'}' + insert: FR=F[5]={f5},R[3]={r3}  FR_ok={fr_ok}  D_ok={d_ok}  cross_ok={cross_ok}"
+        )
 
     print()
 
@@ -273,7 +296,7 @@ def test_5():
     result, _ = apply_algorithm(solved, alg)
 
     print(f"\nAlgorithm: {alg}")
-    print(f"Applied to solved cube.\n")
+    print("Applied to solved cube.\n")
     print_changed(solved, result)
 
     # Also show the full state of affected faces
@@ -301,7 +324,7 @@ def test_5():
             print(f"  Order of this permutation: {n}")
             break
     else:
-        print(f"  Order > 24")
+        print("  Order > 24")
 
     print()
 
@@ -317,7 +340,7 @@ def test_6():
     result, _ = apply_algorithm(solved, alg)
 
     print(f"\nAlgorithm: {alg}")
-    print(f"Applied to solved cube.\n")
+    print("Applied to solved cube.\n")
     print_changed(solved, result)
 
     # Show full state of changed faces
@@ -341,10 +364,10 @@ def test_6():
             print(f"\n  Order of this permutation: {n}")
             break
     else:
-        print(f"\n  Order > 24")
+        print("\n  Order > 24")
 
     # Also test R U' R' U
-    print(f"\n  --- Also testing R U' R' U ---")
+    print("\n  --- Also testing R U' R' U ---")
     alg2 = "R U' R' U"
     result2, _ = apply_algorithm(solved, alg2)
     print(f"\n  Algorithm: {alg2}")
@@ -357,7 +380,7 @@ def test_6():
             print(f"\n  Order of R U' R' U: {n}")
             break
     else:
-        print(f"\n  Order of R U' R' U > 24")
+        print("\n  Order of R U' R' U > 24")
 
     print()
 
@@ -366,13 +389,15 @@ if __name__ == "__main__":
     print()
     print("RUBIK'S CUBE SOLVER ALGORITHM TESTS")
     print("=" * 70)
-    print(f"Color convention: U=Y(Yellow), D=W(White), F=G(Green), B=B(Blue), L=O(Orange), R=R(Red)")
-    print(f"Sticker layout per face:")
-    print(f"  0 | 1 | 2")
-    print(f"  ---------")
-    print(f"  3 | 4 | 5")
-    print(f"  ---------")
-    print(f"  6 | 7 | 8")
+    print(
+        "Color convention: U=Y(Yellow), D=W(White), F=G(Green), B=B(Blue), L=O(Orange), R=R(Red)"
+    )
+    print("Sticker layout per face:")
+    print("  0 | 1 | 2")
+    print("  ---------")
+    print("  3 | 4 | 5")
+    print("  ---------")
+    print("  6 | 7 | 8")
     print()
 
     test_1()

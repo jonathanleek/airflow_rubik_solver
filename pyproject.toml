@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+# Scope pytest collection to the real unit-test directory.
+# Scripts under research/ are development artifacts (algorithm searches,
+# cube-engine diagnostics) named test_*.py by history — they are not
+# pytest suites and must not be auto-collected.
+testpaths = ["tests"]

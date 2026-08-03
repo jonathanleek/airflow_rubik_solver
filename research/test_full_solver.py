@@ -1,19 +1,32 @@
 """End-to-end solver test: run all phases step by step on scrambled cubes."""
 
-import copy
 import sys
+
 sys.path.insert(0, ".")
 
-from include.rubik.cube import apply_algorithm, get_solved_state, generate_scramble, is_solved
-from include.rubik.solver import (
-    is_cross_solved, solve_cross_step,
-    is_white_corners_solved, solve_white_corners_step,
-    is_middle_layer_solved, solve_middle_step,
-    is_yellow_cross_solved, solve_yellow_cross_step,
-    is_yellow_face_solved, solve_yellow_face_step,
-    is_yellow_corners_positioned, solve_yellow_corners_step,
-    is_yellow_edges_positioned, solve_yellow_edges_step,
+from include.rubik.cube import (
+    apply_algorithm,
+    get_solved_state,
+    generate_scramble,
+    is_solved,
 )
+from include.rubik.solver import (
+    is_cross_solved,
+    solve_cross_step,
+    is_white_corners_solved,
+    solve_white_corners_step,
+    is_middle_layer_solved,
+    solve_middle_step,
+    is_yellow_cross_solved,
+    solve_yellow_cross_step,
+    is_yellow_face_solved,
+    solve_yellow_face_step,
+    is_yellow_corners_positioned,
+    solve_yellow_corners_step,
+    is_yellow_edges_positioned,
+    solve_yellow_edges_step,
+)
+
 
 def run_phase(state, name, is_solved_fn, step_fn, max_iter=50):
     """Run a phase until solved or max iterations."""
@@ -28,7 +41,9 @@ def run_phase(state, name, is_solved_fn, step_fn, max_iter=50):
         state = new_state
         iteration += 1
         if iteration <= 5 or iteration % 10 == 0:
-            print(f"  [{name}] iter {iteration}: {len(moves)} moves -> {' '.join(moves)}")
+            print(
+                f"  [{name}] iter {iteration}: {len(moves)} moves -> {' '.join(moves)}"
+            )
 
     if is_solved_fn(state):
         print(f"  [{name}] SOLVED in {iteration} iterations, {total_moves} moves")
@@ -49,9 +64,9 @@ def test_scramble(scramble_moves, idx=0):
     state = get_solved_state()
     state, _ = apply_algorithm(state, scramble_moves)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Test {idx}: Scramble = {scramble_moves}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     all_ok = True
     total = 0
@@ -73,7 +88,7 @@ def test_scramble(scramble_moves, idx=0):
         state, ok, moves = run_phase(state, name, check_fn, step_fn)
         total += moves
         if not ok:
-            print(f"  CUBE STATE AFTER FAILURE:")
+            print("  CUBE STATE AFTER FAILURE:")
             print_cube(state)
             all_ok = False
             break
@@ -94,7 +109,7 @@ def test_scramble(scramble_moves, idx=0):
         if solved:
             print(f"\n  CUBE FULLY SOLVED! Total moves: {total}")
         else:
-            print(f"\n  CUBE NOT FULLY SOLVED after all phases!")
+            print("\n  CUBE NOT FULLY SOLVED after all phases!")
             print_cube(state)
             all_ok = False
 
@@ -112,8 +127,9 @@ scrambles = [
 
 # Also some random scrambles
 import random
+
 random.seed(42)
-for i in range(5):
+for _i in range(5):
     s = generate_scramble(20)
     scrambles.append(" ".join(s))
 
@@ -122,8 +138,8 @@ for i, s in enumerate(scrambles):
     ok = test_scramble(s, i)
     results.append(ok)
 
-print(f"\n{'='*60}")
+print(f"\n{'=' * 60}")
 print(f"RESULTS: {sum(results)}/{len(results)} passed")
-for i, (ok, s) in enumerate(zip(results, scrambles)):
+for _i, (ok, s) in enumerate(zip(results, scrambles, strict=False)):
     status = "PASS" if ok else "FAIL"
     print(f"  {status}: {s[:50]}{'...' if len(s) > 50 else ''}")

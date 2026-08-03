@@ -78,24 +78,34 @@ Running a Solve
 > solved at a time on a given Airflow instance. Triggering `rubik_init` again
 > while a solve is in progress will overwrite the in-flight cube.
 
-Tests
-=====
+Tests & Research Scripts
+========================
 
-The cube engine and solver are pure Python and can be exercised without Airflow:
+The `tests/` directory holds the pytest suite (this is what `astro dev pytest`
+runs, and what a plain `pytest` invocation at the repo root will collect — see
+`pyproject.toml`).
+
+The `research/` directory holds standalone development scripts used while
+building the cube engine and discovering the solver algorithms. Despite their
+`test_*.py` names, they are **not** pytest suites — they're brute-force search
+programs and diagnostic sweeps. Run them directly:
 
 ```
-python3 test_full_solver.py     # end-to-end solve over several scrambles
+python3 research/test_full_solver.py     # end-to-end solve over several scrambles
 ```
 
-Additional `test_*.py` files at the repo root cover move correctness, individual
-phase algorithms, and reference comparisons.
+Other scripts in `research/` cover move correctness, face-rotation direction,
+middle-layer algorithm searches, and reference comparisons against SageMath's
+canonical Rubik's-cube permutations.
 
 Project Layout
 ==============
 
-- `dags/` — the Rubik solver DAGs (plus `exampledag.py`, the stock Astro sample).
+- `dags/` — the Rubik solver DAGs.
 - `include/rubik/` — cube representation and solver logic.
-- `test_*.py` — solver/engine test scripts.
+- `tests/` — pytest suite (collected by `pytest` / `astro dev pytest`).
+- `research/` — development scripts and algorithm-search programs (not pytest).
+- `pyproject.toml` — pytest config (scopes collection to `tests/`).
 - `Dockerfile` — the Astro Runtime image version.
 - `requirements.txt` / `packages.txt` — Python and OS-level dependencies.
 

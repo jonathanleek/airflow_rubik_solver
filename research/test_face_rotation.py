@@ -1,5 +1,7 @@
 """Verify that U face sticker rotation matches adjacent piece rotation direction."""
+
 import sys
+
 sys.path.insert(0, ".")
 from include.rubik.cube import apply_move, get_solved_state
 
@@ -8,13 +10,15 @@ after_u = apply_move(state, "U")
 
 # Adjacent cycle: verified F[0,1,2] → R[0,1,2] (CW from above)
 print("Adjacent pieces after U move (CW from above):")
-print(f"  F top row -> R top row: F[0]={after_u['F'][0]}, R[0]={after_u['R'][0]} (was O, now O→R)")
-print(f"  Confirmed: F→R→B→L (CW)")
+print(
+    f"  F top row -> R top row: F[0]={after_u['F'][0]}, R[0]={after_u['R'][0]} (was O, now O→R)"
+)
+print("  Confirmed: F→R→B→L (CW)")
 
 # Face sticker rotation
 print("\nU face stickers after U move:")
-print(f"  Before: 0=Y 1=Y 2=Y / 3=Y 4=Y 5=Y / 6=Y 7=Y 8=Y (all yellow)")
-print(f"  After:  same (all yellow, can't tell direction)")
+print("  Before: 0=Y 1=Y 2=Y / 3=Y 4=Y 5=Y / 6=Y 7=Y 8=Y (all yellow)")
+print("  After:  same (all yellow, can't tell direction)")
 
 # To test face sticker direction, we need different colors on U face
 # Set up: put a marker at U[0] and see where it goes
@@ -23,8 +27,8 @@ state2["U"][0] = "X"  # marker at top-left
 after = apply_move(state2, "U")
 marker_pos = after["U"].index("X")
 print(f"\nMarker test: U[0]='X', after U move, X is at U[{marker_pos}]")
-print(f"  If CW (viewed from above): 0→2 (top-left → top-right)")
-print(f"  If CCW (viewed from above): 0→6 (top-left → bottom-left)")
+print("  If CW (viewed from above): 0→2 (top-left → top-right)")
+print("  If CCW (viewed from above): 0→6 (top-left → bottom-left)")
 
 if marker_pos == 2:
     print("  RESULT: CW ✓ (correct)")

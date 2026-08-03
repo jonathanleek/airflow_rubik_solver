@@ -1,25 +1,17 @@
 """Test script for Rubik's cube move correctness."""
 
-import copy
 from include.rubik.cube import (
     get_solved_state,
     apply_move,
     is_solved,
     MOVE_PERMS,
-    compose_perms,
-    _state_to_flat,
-    _flat_to_state,
-    _make_identity,
 )
-from include.rubik.constants import COLORS, FACES, SOLVED_STATE
+from include.rubik.constants import COLORS, FACES
 
 
 def state_equal(s1, s2):
     """Check if two cube states are identical."""
-    for face in FACES:
-        if s1[face] != s2[face]:
-            return False
-    return True
+    return all(s1[face] == s2[face] for face in FACES)
 
 
 def test_m4_identity():
@@ -31,7 +23,7 @@ def test_m4_identity():
     all_pass = True
     for move in base_moves:
         state = get_solved_state()
-        for i in range(4):
+        for _i in range(4):
             state = apply_move(state, move)
         passed = is_solved(state)
         status = "PASS" if passed else "FAIL"
@@ -42,7 +34,9 @@ def test_m4_identity():
             diffs = []
             for face in FACES:
                 if state[face] != solved[face]:
-                    diffs.append(f"  {face}: got {state[face]}, expected {solved[face]}")
+                    diffs.append(
+                        f"  {face}: got {state[face]}, expected {solved[face]}"
+                    )
             print(f"  {move}^4 = I: {status}")
             for d in diffs:
                 print(d)
@@ -70,7 +64,9 @@ def test_m_mprime_identity():
             diffs = []
             for face in FACES:
                 if state[face] != solved[face]:
-                    diffs.append(f"  {face}: got {state[face]}, expected {solved[face]}")
+                    diffs.append(
+                        f"  {face}: got {state[face]}, expected {solved[face]}"
+                    )
             print(f"  {move} * {move}' = I: {status}")
             for d in diffs:
                 print(d)
@@ -86,7 +82,9 @@ def test_r_move_f2_to_u8():
     print("=" * 60)
     print("  Physical Rubik's cube: R move rotates right face CW (looking at it).")
     print("  F[2] (top-right of Front face) is green on a solved cube.")
-    print("  After R, that green sticker should move to U[8] (bottom-right of Up face).")
+    print(
+        "  After R, that green sticker should move to U[8] (bottom-right of Up face)."
+    )
     print()
 
     solved = get_solved_state()
@@ -98,15 +96,23 @@ def test_r_move_f2_to_u8():
     expected_u8 = "G"  # green from F[2]
     actual_u8 = state["U"][8]
     passed = actual_u8 == expected_u8
-    print(f"\n  U[8] after R: expected '{expected_u8}' (green from F[2]), got '{actual_u8}'")
+    print(
+        f"\n  U[8] after R: expected '{expected_u8}' (green from F[2]), got '{actual_u8}'"
+    )
     print(f"  Result: {'PASS' if passed else 'FAIL'}")
 
     # Also show what moved where for the right column
     print("\n  Full right-column trace after R:")
-    print(f"    U[2]={solved['U'][2]} -> after R: U[2]={state['U'][2]}  (was {solved['U'][2]}, should become B sticker from B[6])")
+    print(
+        f"    U[2]={solved['U'][2]} -> after R: U[2]={state['U'][2]}  (was {solved['U'][2]}, should become B sticker from B[6])"
+    )
     print(f"    U[5]={solved['U'][5]} -> after R: U[5]={state['U'][5]}")
-    print(f"    U[8]={solved['U'][8]} -> after R: U[8]={state['U'][8]}  (should be G from F[2])")
-    print(f"    F[2]={solved['F'][2]} -> after R: F[2]={state['F'][2]}  (should be W from D[2])")
+    print(
+        f"    U[8]={solved['U'][8]} -> after R: U[8]={state['U'][8]}  (should be G from F[2])"
+    )
+    print(
+        f"    F[2]={solved['F'][2]} -> after R: F[2]={state['F'][2]}  (should be W from D[2])"
+    )
     print(f"    F[5]={solved['F'][5]} -> after R: F[5]={state['F'][5]}")
     print(f"    F[8]={solved['F'][8]} -> after R: F[8]={state['F'][8]}")
     print(f"    D[2]={solved['D'][2]} -> after R: D[2]={state['D'][2]}")
@@ -140,10 +146,18 @@ def test_u_move_front_to_right():
 
     # Show all 4 face top-row movements
     print("\n  Full top-row cycle after U:")
-    print(f"    F[0,1,2] was {[solved['F'][i] for i in [0,1,2]]} -> after U: {[state['F'][i] for i in [0,1,2]]}")
-    print(f"    R[0,1,2] was {[solved['R'][i] for i in [0,1,2]]} -> after U: {[state['R'][i] for i in [0,1,2]]}")
-    print(f"    B[0,1,2] was {[solved['B'][i] for i in [0,1,2]]} -> after U: {[state['B'][i] for i in [0,1,2]]}")
-    print(f"    L[0,1,2] was {[solved['L'][i] for i in [0,1,2]]} -> after U: {[state['L'][i] for i in [0,1,2]]}")
+    print(
+        f"    F[0,1,2] was {[solved['F'][i] for i in [0, 1, 2]]} -> after U: {[state['F'][i] for i in [0, 1, 2]]}"
+    )
+    print(
+        f"    R[0,1,2] was {[solved['R'][i] for i in [0, 1, 2]]} -> after U: {[state['R'][i] for i in [0, 1, 2]]}"
+    )
+    print(
+        f"    B[0,1,2] was {[solved['B'][i] for i in [0, 1, 2]]} -> after U: {[state['B'][i] for i in [0, 1, 2]]}"
+    )
+    print(
+        f"    L[0,1,2] was {[solved['L'][i] for i in [0, 1, 2]]} -> after U: {[state['L'][i] for i in [0, 1, 2]]}"
+    )
     print()
 
 
@@ -215,7 +229,9 @@ def test_u_face_sticker_cycle():
         source_flat = perm[flat_idx]
         source_face = FACES[source_flat // 9]
         source_pos = source_flat % 9
-        print(f"    U[{pos}] <- {source_face}[{source_pos}]  (i.e., position {flat_idx} gets value from position {source_flat})")
+        print(
+            f"    U[{pos}] <- {source_face}[{source_pos}]  (i.e., position {flat_idx} gets value from position {source_flat})"
+        )
 
     print()
 
@@ -257,7 +273,9 @@ def test_u_face_sticker_cycle():
     state = apply_move(solved, "U")
     print(f"    Before U: U = {solved['U']}")
     print(f"    After  U: U = {state['U']}")
-    print("  (U face stickers remain yellow since the face itself rotates, keeping its own colors)")
+    print(
+        "  (U face stickers remain yellow since the face itself rotates, keeping its own colors)"
+    )
     print()
 
 
@@ -265,9 +283,11 @@ if __name__ == "__main__":
     print()
     print("RUBIK'S CUBE MOVE CORRECTNESS TESTS")
     print("=" * 60)
-    print(f"Color convention: U={COLORS['U']}(Yellow), D={COLORS['D']}(White), "
-          f"F={COLORS['F']}(Green), B={COLORS['B']}(Blue), "
-          f"L={COLORS['L']}(Orange), R={COLORS['R']}(Red)")
+    print(
+        f"Color convention: U={COLORS['U']}(Yellow), D={COLORS['D']}(White), "
+        f"F={COLORS['F']}(Green), B={COLORS['B']}(Blue), "
+        f"L={COLORS['L']}(Orange), R={COLORS['R']}(Red)"
+    )
     print()
 
     test_m4_identity()

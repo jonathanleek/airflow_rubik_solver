@@ -1,15 +1,28 @@
 """Find ALL middle layer algorithms for all 4 slots, both directions, and ejects."""
+
 import sys, copy
+
 sys.path.insert(0, ".")
 
 from itertools import product
-from include.rubik.cube import apply_move, apply_algorithm, get_solved_state, generate_scramble
-from include.rubik.solver import (
-    is_cross_solved, solve_cross_step,
-    is_white_corners_solved, solve_white_corners_step,
-    _is_middle_edge_solved, _find_edge, _gs, _edge_layer,
-    MIDDLE_EDGES, MIDDLE_EDGE_TARGETS, _FACE_ORDER,
+from include.rubik.cube import (
+    apply_algorithm,
+    get_solved_state,
+    generate_scramble,
 )
+from include.rubik.solver import (
+    is_cross_solved,
+    solve_cross_step,
+    is_white_corners_solved,
+    solve_white_corners_step,
+    _is_middle_edge_solved,
+    _find_edge,
+    _gs,
+    _edge_layer,
+    MIDDLE_EDGES,
+    MIDDLE_EDGE_TARGETS,
+)
+
 
 def solve_phase(state, check_fn, step_fn, max_iter=50):
     for _ in range(max_iter):
@@ -20,6 +33,7 @@ def solve_phase(state, check_fn, step_fn, max_iter=50):
             return state, False
     return state, check_fn(state)
 
+
 def d_layer_ok(state):
     if not all(state["D"][i] == "W" for i in range(9)):
         return False
@@ -28,6 +42,7 @@ def d_layer_ok(state):
             if state[face][idx] != color:
                 return False
     return True
+
 
 def search_alg(state, target_edge, move_set, max_len=9):
     """Search for an algorithm that solves target_edge while preserving D layer."""
@@ -97,11 +112,13 @@ def search_alg(state, target_edge, move_set, max_len=9):
 
 # First, build all 8 test states
 import random
+
 random.seed(42)
 
 # The approach: for each of the 4 slots, we need the slot's edge in the U layer
 # with both possible orientations. We'll construct states by solving cross+corners
 # on random scrambles and finding ones where the target edge is in U with the right orientation.
+
 
 def get_move_set(f1, f2):
     moves = []
@@ -109,41 +126,102 @@ def get_move_set(f1, f2):
         moves.extend([f, f + "'", f + "2"])
     return moves
 
+
 # All 8 algorithm cases
 # (slot_name, front_face_for_right, adj_face_for_right, description)
 cases = [
     # FR slot
-    ("FR", "F", "R", "RIGHT", "G", "R"),  # edge above F, G on F-side, R on U -> insert right to R
-    ("FR", "R", "F", "LEFT", "R", "G"),   # edge above R, R on R-side, G on U -> insert left to F
+    (
+        "FR",
+        "F",
+        "R",
+        "RIGHT",
+        "G",
+        "R",
+    ),  # edge above F, G on F-side, R on U -> insert right to R
+    (
+        "FR",
+        "R",
+        "F",
+        "LEFT",
+        "R",
+        "G",
+    ),  # edge above R, R on R-side, G on U -> insert left to F
     # FL slot (between F and L, L is CCW from F)
-    ("FL", "L", "F", "RIGHT", "O", "G"),  # edge above L, O on L-side, G on U -> insert right to F
-    ("FL", "F", "L", "LEFT", "G", "O"),   # edge above F, G on F-side, O on U -> insert left to L
+    (
+        "FL",
+        "L",
+        "F",
+        "RIGHT",
+        "O",
+        "G",
+    ),  # edge above L, O on L-side, G on U -> insert right to F
+    (
+        "FL",
+        "F",
+        "L",
+        "LEFT",
+        "G",
+        "O",
+    ),  # edge above F, G on F-side, O on U -> insert left to L
     # BR slot (between B and R)
-    ("BR", "R", "B", "RIGHT", "R", "B"),  # edge above R, R on R-side, B on U -> insert right to B
-    ("BR", "B", "R", "LEFT", "B", "R"),   # edge above B, B on B-side, R on U -> insert left to R
+    (
+        "BR",
+        "R",
+        "B",
+        "RIGHT",
+        "R",
+        "B",
+    ),  # edge above R, R on R-side, B on U -> insert right to B
+    (
+        "BR",
+        "B",
+        "R",
+        "LEFT",
+        "B",
+        "R",
+    ),  # edge above B, B on B-side, R on U -> insert left to R
     # BL slot (between B and L)
-    ("BL", "B", "L", "RIGHT", "B", "O"),  # edge above B, B on B-side, O on U -> insert right to L
-    ("BL", "L", "B", "LEFT", "O", "B"),   # edge above L, O on L-side, B on U -> insert left to B
+    (
+        "BL",
+        "B",
+        "L",
+        "RIGHT",
+        "B",
+        "O",
+    ),  # edge above B, B on B-side, O on U -> insert right to L
+    (
+        "BL",
+        "L",
+        "B",
+        "LEFT",
+        "O",
+        "B",
+    ),  # edge above L, O on L-side, B on U -> insert left to B
 ]
 
 results = {}
 
 for slot, front, adj, direction, side_c, u_c in cases:
     key = f"{slot}_{direction}"
-    print(f"\nSearching {key}: edge above {front}, {side_c} on {front}-side, {u_c} on U...")
+    print(
+        f"\nSearching {key}: edge above {front}, {side_c} on {front}-side, {u_c} on U..."
+    )
 
     c1, c2 = MIDDLE_EDGE_TARGETS[slot]
 
     # Find a state where this edge is in U above front_face with the right orientation
     found_state = None
-    for attempt in range(200):
+    for _attempt in range(200):
         scramble = generate_scramble(20)
         state = get_solved_state()
         state, _ = apply_algorithm(state, " ".join(scramble))
         state, ok1 = solve_phase(state, is_cross_solved, solve_cross_step)
         if not ok1:
             continue
-        state, ok2 = solve_phase(state, is_white_corners_solved, solve_white_corners_step)
+        state, ok2 = solve_phase(
+            state, is_white_corners_solved, solve_white_corners_step
+        )
         if not ok2 or not d_layer_ok(state):
             continue
 
@@ -159,9 +237,18 @@ for slot, front, adj, direction, side_c, u_c in cases:
 
             # Check if edge is at the right position
             # Edge above front_face: the side-face sticker should be on front_face
-            side_faces_map = {"F": ("U", 7, "F", 1), "R": ("U", 5, "R", 1),
-                              "B": ("U", 1, "B", 1), "L": ("U", 3, "L", 1)}
-            u_idx, u_pos, f_face, f_pos = side_faces_map[front][0], side_faces_map[front][1], side_faces_map[front][2], side_faces_map[front][3]
+            side_faces_map = {
+                "F": ("U", 7, "F", 1),
+                "R": ("U", 5, "R", 1),
+                "B": ("U", 1, "B", 1),
+                "L": ("U", 3, "L", 1),
+            }
+            u_idx, u_pos, f_face, f_pos = (
+                side_faces_map[front][0],
+                side_faces_map[front][1],
+                side_faces_map[front][2],
+                side_faces_map[front][3],
+            )
 
             u_val = _gs(test, "U", u_pos)
             f_val = _gs(test, f_face, f_pos)
@@ -174,10 +261,10 @@ for slot, front, adj, direction, side_c, u_c in cases:
             break
 
     if found_state is None:
-        print(f"  Could not find test state!")
+        print("  Could not find test state!")
         continue
 
-    print(f"  Found test state. Searching...")
+    print("  Found test state. Searching...")
     move_set = get_move_set(front, adj)
     alg = search_alg(found_state, slot, move_set, max_len=8)
 
@@ -192,24 +279,26 @@ for slot, front, adj, direction, side_c, u_c in cases:
             print(f"  FOUND (extended): {alg}")
             results[key] = alg
         else:
-            print(f"  NOT FOUND!")
+            print("  NOT FOUND!")
 
 # Also find EJECT algorithms (move a wrong edge from middle layer to U)
-print(f"\n{'='*60}")
+print(f"\n{'=' * 60}")
 print("Searching EJECT algorithms...")
-print(f"{'='*60}")
+print(f"{'=' * 60}")
 
 for slot in ["FR", "FL", "BR", "BL"]:
     print(f"\nEject from {slot}:")
     # Need a state where slot has a wrong edge
-    for attempt in range(200):
+    for _attempt in range(200):
         scramble = generate_scramble(20)
         state = get_solved_state()
         state, _ = apply_algorithm(state, " ".join(scramble))
         state, ok1 = solve_phase(state, is_cross_solved, solve_cross_step)
         if not ok1:
             continue
-        state, ok2 = solve_phase(state, is_white_corners_solved, solve_white_corners_step)
+        state, ok2 = solve_phase(
+            state, is_white_corners_solved, solve_white_corners_step
+        )
         if not ok2 or not d_layer_ok(state):
             continue
         # Check slot has wrong edge
@@ -268,8 +357,8 @@ for slot in ["FR", "FL", "BR", "BL"]:
                 results[f"{slot}_EJECT"] = found_eject
                 break
 
-print(f"\n{'='*60}")
+print(f"\n{'=' * 60}")
 print("ALL RESULTS:")
-print(f"{'='*60}")
+print(f"{'=' * 60}")
 for key in sorted(results.keys()):
     print(f"  {key:20s}: {results[key]}")

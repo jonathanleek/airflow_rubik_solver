@@ -12,13 +12,12 @@ import copy
 # Allow imports from project root
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from include.rubik.constants import COLORS, FACES, SOLVED_STATE
+from include.rubik.constants import COLORS, FACES
 from include.rubik.cube import (
     _index,
     _face_pos,
     _make_identity,
     _apply_cycles,
-    _rotate_face_cw,
     compose_perms,
     apply_move,
     apply_algorithm,
@@ -94,23 +93,29 @@ def test_apply_cycles_semantics():
     actual = perm[:4]
     if actual == expected_forward:
         semantic = "BACKWARD rotation: cycle [A,B,C,D] means D->A, A->B, B->C, C->D"
-        report("Cycle semantics", True,
-               f"perm[:4] = {actual}\n"
-               f"Interpretation: {semantic}\n"
-               f"So cycle [A,B,C,D] in _apply_cycles means:\n"
-               f"  Position A gets value from D (sticker at D moves to A)\n"
-               f"  Position B gets value from A (sticker at A moves to B)\n"
-               f"  Position C gets value from B (sticker at B moves to C)\n"
-               f"  Position D gets value from C (sticker at C moves to D)")
+        report(
+            "Cycle semantics",
+            True,
+            f"perm[:4] = {actual}\n"
+            f"Interpretation: {semantic}\n"
+            f"So cycle [A,B,C,D] in _apply_cycles means:\n"
+            f"  Position A gets value from D (sticker at D moves to A)\n"
+            f"  Position B gets value from A (sticker at A moves to B)\n"
+            f"  Position C gets value from B (sticker at B moves to C)\n"
+            f"  Position D gets value from C (sticker at C moves to D)",
+        )
     elif actual == expected_backward:
         semantic = "FORWARD rotation: cycle [A,B,C,D] means A->B, B->C, C->D, D->A"
-        report("Cycle semantics", True,
-               f"perm[:4] = {actual}\n"
-               f"Interpretation: {semantic}")
+        report(
+            "Cycle semantics", True, f"perm[:4] = {actual}\nInterpretation: {semantic}"
+        )
     else:
-        report("Cycle semantics", False,
-               f"perm[:4] = {actual}\n"
-               f"Expected forward {expected_forward} or backward {expected_backward}")
+        report(
+            "Cycle semantics",
+            False,
+            f"perm[:4] = {actual}\n"
+            f"Expected forward {expected_forward} or backward {expected_backward}",
+        )
 
     # Now verify with actual sticker values
     print("\n  Concrete verification with sticker colors:")
@@ -118,8 +123,10 @@ def test_apply_cycles_semantics():
     new_flat = [flat[perm[i]] for i in range(54)]
     print(f"    Before: positions 0,1,2,3 have values {flat[:4]}")
     print(f"    After:  positions 0,1,2,3 have values {new_flat[:4]}")
-    print(f"    So value 3 moved to position 0, value 0 moved to position 1, etc.")
-    print(f"    Physical sticker movement: 3->0->1->2->3 (backward/CCW if viewed as cycle)")
+    print("    So value 3 moved to position 0, value 0 moved to position 1, etc.")
+    print(
+        "    Physical sticker movement: 3->0->1->2->3 (backward/CCW if viewed as cycle)"
+    )
 
 
 # =============================================================================
@@ -313,7 +320,7 @@ def test_move_correctness():
         for src_face, src_pos, dst_face, dst_pos in test_data["expected_destinations"]:
             src_color = get_sticker(solved, src_face, src_pos)
             actual_color = get_sticker(state_after, dst_face, dst_pos)
-            ok = (actual_color == src_color)
+            ok = actual_color == src_color
             if not ok:
                 all_pass = False
                 details.append(
@@ -347,7 +354,7 @@ def test_face_rotation():
     #
     # We need to test what the PHYSICAL result should be.
 
-    solved = get_solved_state()
+    solved = get_solved_state()  # noqa: F841
 
     # We'll label each face sticker with a unique marker to track rotation.
     # We can't use the solved state for this since all face stickers have the same color.
@@ -400,26 +407,42 @@ def test_face_rotation():
         # Standard CW (looking at face from outside):
         # Corner: 0->2->8->6->0 means pos 2 gets from 0, pos 8 gets from 2, pos 6 gets from 8, pos 0 gets from 6
         standard_cw = {
-            0: 6, 2: 0, 8: 2, 6: 8,  # corners: pos gets value from
-            1: 3, 5: 1, 7: 5, 3: 7,  # edges: pos gets value from
+            0: 6,
+            2: 0,
+            8: 2,
+            6: 8,  # corners: pos gets value from
+            1: 3,
+            5: 1,
+            7: 5,
+            3: 7,  # edges: pos gets value from
             4: 4,  # center stays
         }
 
-        ok = (face_mapping == standard_cw)
+        ok = face_mapping == standard_cw
         detail = f"Permutation for {face} face stickers (pos <- src):\n"
-        detail += f"  Actual:   { {k: face_mapping[k] for k in sorted(face_mapping)} }\n"
+        detail += (
+            f"  Actual:   { {k: face_mapping[k] for k in sorted(face_mapping)} }\n"
+        )
         detail += f"  Expected: { {k: standard_cw[k] for k in sorted(standard_cw)} }"
 
         if not ok:
             # Check if it matches the "other" CW pattern used for U/D/B
             alt_cw = {
-                0: 2, 6: 0, 8: 6, 2: 8,  # corners: 0->6->8->2->0 reversed
-                1: 5, 3: 1, 7: 3, 5: 7,  # edges
+                0: 2,
+                6: 0,
+                8: 6,
+                2: 8,  # corners: 0->6->8->2->0 reversed
+                1: 5,
+                3: 1,
+                7: 3,
+                5: 7,  # edges
                 4: 4,
             }
             if face_mapping == alt_cw:
-                detail += f"\n  NOTE: Matches the REVERSED CW pattern (0<-2, 6<-0, 8<-6, 2<-8)"
-                detail += f"\n  This is the pattern used in the code for U/D/B faces"
+                detail += (
+                    "\n  NOTE: Matches the REVERSED CW pattern (0<-2, 6<-0, 8<-6, 2<-8)"
+                )
+                detail += "\n  This is the pattern used in the code for U/D/B faces"
 
         report(f"{move_name} face rotation", ok, detail)
 
@@ -469,7 +492,7 @@ def test_algorithm_orders():
                 order = i
                 break
 
-        ok = (order == expected)
+        ok = order == expected
         detail = f"Expected order: {expected}, Actual order: {order}"
         if order == 0:
             detail += f" (did not return to solved within {max_check} repetitions!)"
@@ -505,7 +528,7 @@ def test_manual_trace():
 
     for move in moves_sequence:
         state = apply_move(state, move)
-        cumulative += (" " + move if cumulative else move)
+        cumulative += " " + move if cumulative else move
         print_state_compact(state, cumulative)
 
     # Now let's check against what a physical cube would produce.
@@ -539,7 +562,7 @@ def test_manual_trace():
     # Wait, that's not quite right because of corner twists. Let me just check:
 
     # After 1x sexy move from solved:
-    expected_changes = {
+    expected_changes = {  # noqa: F841
         # Known physical result (verified against standard cube simulators)
         # Corners:
         ("U", 8): "Y",  # Will check what we actually get
@@ -562,10 +585,15 @@ def test_manual_trace():
             expected_solved = COLORS[face]
             if actual != expected_solved:
                 changes_found += 1
-                print(f"    {face}[{i}] = {actual} (expected {expected_solved} if solved)")
+                print(
+                    f"    {face}[{i}] = {actual} (expected {expected_solved} if solved)"
+                )
 
-    report("Sexy move produces changes", changes_found > 0,
-           f"Found {changes_found} non-solved stickers")
+    report(
+        "Sexy move produces changes",
+        changes_found > 0,
+        f"Found {changes_found} non-solved stickers",
+    )
 
     # After 6 sexy moves, should be solved
     state6 = copy.deepcopy(solved)
@@ -580,7 +608,9 @@ def test_manual_trace():
     # ---- DETAILED PHYSICAL COMPARISON ----
     print("\n  --- Detailed comparison with KNOWN physical cube result ---")
     print("  After R U R' U' on a physical cube, the changes from solved are:")
-    print("  (Standard orientation: U=Yellow, F=Green, R=Red, B=Blue, L=Orange, D=White)")
+    print(
+        "  (Standard orientation: U=Yellow, F=Green, R=Red, B=Blue, L=Orange, D=White)"
+    )
     print()
 
     # Known correct result of R U R' U' from solved state:
@@ -604,12 +634,17 @@ def test_manual_trace():
 
     # After R:
     s = apply_move(s, "R")
-    print("\n  After R (expected: F right col->U right col, U right col->B left col reversed, etc.):")
+    print(
+        "\n  After R (expected: F right col->U right col, U right col->B left col reversed, etc.):"
+    )
     for face in FACES:
         vals = s[face]
         solved_vals = [COLORS[face]] * 9
         if vals != solved_vals:
-            diff_str = " ".join(f"{vals[i]}" + (f"*" if vals[i] != solved_vals[i] else "") for i in range(9))
+            diff_str = " ".join(
+                f"{vals[i]}" + ("*" if vals[i] != solved_vals[i] else "")
+                for i in range(9)
+            )
             print(f"    {face}: [{diff_str}]  (* = changed)")
 
     # After R U:
@@ -619,7 +654,10 @@ def test_manual_trace():
         vals = s[face]
         solved_vals = [COLORS[face]] * 9
         if vals != solved_vals:
-            diff_str = " ".join(f"{vals[i]}" + (f"*" if vals[i] != solved_vals[i] else "") for i in range(9))
+            diff_str = " ".join(
+                f"{vals[i]}" + ("*" if vals[i] != solved_vals[i] else "")
+                for i in range(9)
+            )
             print(f"    {face}: [{diff_str}]  (* = changed)")
 
     # After R U R':
@@ -629,7 +667,10 @@ def test_manual_trace():
         vals = s[face]
         solved_vals = [COLORS[face]] * 9
         if vals != solved_vals:
-            diff_str = " ".join(f"{vals[i]}" + (f"*" if vals[i] != solved_vals[i] else "") for i in range(9))
+            diff_str = " ".join(
+                f"{vals[i]}" + ("*" if vals[i] != solved_vals[i] else "")
+                for i in range(9)
+            )
             print(f"    {face}: [{diff_str}]  (* = changed)")
 
     # After R U R' U':
@@ -639,7 +680,10 @@ def test_manual_trace():
         vals = s[face]
         solved_vals = [COLORS[face]] * 9
         if vals != solved_vals:
-            diff_str = " ".join(f"{vals[i]}" + (f"*" if vals[i] != solved_vals[i] else "") for i in range(9))
+            diff_str = " ".join(
+                f"{vals[i]}" + ("*" if vals[i] != solved_vals[i] else "")
+                for i in range(9)
+            )
             print(f"    {face}: [{diff_str}]  (* = changed)")
 
     # Known correct result after R U R' U':
@@ -727,20 +771,29 @@ def test_compose_direction():
     flat2b = [solved_flat[composed_ru[i]] for i in range(54)]
 
     if flat1 == flat2a:
-        report("compose_perms(U, R) gives R then U", True,
-               "compose_perms(second_move, first_move) = correct sequential order\n"
-               "This means compose_perms(p1, p2) applies p2 FIRST, then p1 -- but wait,\n"
-               "this doesn't match the expected math convention. Let me check...")
+        report(
+            "compose_perms(U, R) gives R then U",
+            True,
+            "compose_perms(second_move, first_move) = correct sequential order\n"
+            "This means compose_perms(p1, p2) applies p2 FIRST, then p1 -- but wait,\n"
+            "this doesn't match the expected math convention. Let me check...",
+        )
     elif flat1 == flat2b:
-        report("compose_perms(R, U) gives R then U", True,
-               "compose_perms(first_move, second_move) = correct sequential order\n"
-               "This means compose_perms(p1, p2) applies p1 FIRST, then p2")
+        report(
+            "compose_perms(R, U) gives R then U",
+            True,
+            "compose_perms(first_move, second_move) = correct sequential order\n"
+            "This means compose_perms(p1, p2) applies p1 FIRST, then p2",
+        )
     else:
-        report("compose_perms direction", False,
-               f"Neither compose order matches sequential R then U!\n"
-               f"Sequential:       {flat1[:20]}...\n"
-               f"compose(U,R):     {flat2a[:20]}...\n"
-               f"compose(R,U):     {flat2b[:20]}...")
+        report(
+            "compose_perms direction",
+            False,
+            f"Neither compose order matches sequential R then U!\n"
+            f"Sequential:       {flat1[:20]}...\n"
+            f"compose(U,R):     {flat2a[:20]}...\n"
+            f"compose(R,U):     {flat2b[:20]}...",
+        )
 
     # Also verify the inverse is built correctly
     # R' should be R^3 = compose(R, compose(R, R))
@@ -768,8 +821,10 @@ def test_r_move_detailed():
         if r_perm[i] != i:
             src_face, src_pos = _face_pos(r_perm[i])
             dst_face, dst_pos = _face_pos(i)
-            print(f"    {dst_face}[{dst_pos}] <- {src_face}[{src_pos}]  "
-                  f"(sticker at {src_face}[{src_pos}] goes to {dst_face}[{dst_pos}])")
+            print(
+                f"    {dst_face}[{dst_pos}] <- {src_face}[{src_pos}]  "
+                f"(sticker at {src_face}[{src_pos}] goes to {dst_face}[{dst_pos}])"
+            )
 
     # Count cycles
     visited = set()
@@ -803,10 +858,12 @@ if __name__ == "__main__":
 
     print(f"\nFace order: {FACES}")
     print(f"Color map: {COLORS}")
-    print(f"Index mapping examples:")
+    print("Index mapping examples:")
     for face in FACES:
-        print(f"  {face}[0] = flat index {_index(face, 0)}, "
-              f"{face}[8] = flat index {_index(face, 8)}")
+        print(
+            f"  {face}[0] = flat index {_index(face, 0)}, "
+            f"{face}[8] = flat index {_index(face, 8)}"
+        )
 
     test_apply_cycles_semantics()
     test_move_correctness()

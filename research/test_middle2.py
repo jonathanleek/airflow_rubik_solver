@@ -1,16 +1,33 @@
 """Find correct middle layer algorithms using a realistic post-corners state."""
-import sys, copy
+
+import sys
+
 sys.path.insert(0, ".")
 
 from itertools import product
-from include.rubik.cube import apply_move, apply_algorithm, get_solved_state, generate_scramble
-from include.rubik.solver import (
-    is_cross_solved, solve_cross_step,
-    is_white_corners_solved, solve_white_corners_step,
-    is_middle_layer_solved, _is_middle_edge_solved,
-    _find_edge, _gs, _edge_layer, _edge_side_face_in_u, _edge_color_on_face,
-    _FACE_ORDER, _COLOR_TO_FACE, MIDDLE_EDGES, MIDDLE_EDGE_TARGETS,
+from include.rubik.cube import (
+    apply_algorithm,
+    get_solved_state,
+    generate_scramble,
 )
+from include.rubik.solver import (
+    is_cross_solved,
+    solve_cross_step,
+    is_white_corners_solved,
+    solve_white_corners_step,
+    is_middle_layer_solved,
+    _is_middle_edge_solved,
+    _find_edge,
+    _gs,
+    _edge_layer,
+    _edge_side_face_in_u,
+    _edge_color_on_face,
+    _FACE_ORDER,
+    _COLOR_TO_FACE,
+    MIDDLE_EDGES,
+    MIDDLE_EDGE_TARGETS,
+)
+
 
 def solve_phase(state, check_fn, step_fn, max_iter=50):
     for _ in range(max_iter):
@@ -20,6 +37,7 @@ def solve_phase(state, check_fn, step_fn, max_iter=50):
         if not moves:
             return state, False
     return state, check_fn(state)
+
 
 def d_layer_intact(state):
     """Check full D layer: cross + corners + adjacent stickers."""
@@ -34,8 +52,10 @@ def d_layer_intact(state):
                 return False
     return True
 
+
 # Get a realistic post-corners state
 import random
+
 random.seed(123)
 for attempt in range(20):
     scramble = generate_scramble(20)
@@ -61,9 +81,11 @@ for attempt in range(20):
         targets = MIDDLE_EDGE_TARGETS[edge_name]
         loc = _find_edge(state, targets[0], targets[1])
         if loc:
-            (p1,s1),(p2,s2) = loc
+            (p1, s1), (p2, s2) = loc
             layer = _edge_layer(loc)
-            print(f"  {edge_name}: {'SOLVED' if solved else 'UNSOLVED'} at {p1[0]}[{p1[1]}]={s1}, {p2[0]}[{p2[1]}]={s2} (layer={layer})")
+            print(
+                f"  {edge_name}: {'SOLVED' if solved else 'UNSOLVED'} at {p1[0]}[{p1[1]}]={s1}, {p2[0]}[{p2[1]}]={s2} (layer={layer})"
+            )
 
     # Now brute-force search for the right algorithm
     # Find the first unsolved middle edge that's in U layer
@@ -91,9 +113,11 @@ for attempt in range(20):
     targets = MIDDLE_EDGE_TARGETS[target_edge]
     c1, c2 = targets
     loc = _find_edge(state, c1, c2)
-    (p1,s1),(p2,s2) = loc
+    (p1, s1), (p2, s2) = loc
     layer = _edge_layer(loc)
-    print(f"\n  Target: {target_edge} ({c1}/{c2}), currently at {p1[0]}[{p1[1]}]={s1}, {p2[0]}[{p2[1]}]={s2} (layer={layer})")
+    print(
+        f"\n  Target: {target_edge} ({c1}/{c2}), currently at {p1[0]}[{p1[1]}]={s1}, {p2[0]}[{p2[1]}]={s2} (layer={layer})"
+    )
 
     # If edge is in U layer, position it above the front face first
     if layer == "U":
@@ -117,7 +141,7 @@ for attempt in range(20):
 
         # Now edge should be above the target face
         loc2 = _find_edge(test_state, c1, c2)
-        (p1b,s1b),(p2b,s2b) = loc2
+        (p1b, s1b), (p2b, s2b) = loc2
         print(f"  After align: {p1b[0]}[{p1b[1]}]={s1b}, {p2b[0]}[{p2b[1]}]={s2b}")
 
         # Now determine: which face is the edge above? And which slot should it go to?
@@ -127,8 +151,12 @@ for attempt in range(20):
         tcf_idx = _FACE_ORDER.index(side_face_after)
         utf_idx = _FACE_ORDER.index(u_target)
         diff = (utf_idx - tcf_idx) % 4
-        direction = "RIGHT" if diff == 1 else ("LEFT" if diff == 3 else f"UNKNOWN({diff})")
-        print(f"  Insert direction: {direction} (u_color={u_color_after} -> {u_target}, side_face={side_face_after})")
+        direction = (
+            "RIGHT" if diff == 1 else ("LEFT" if diff == 3 else f"UNKNOWN({diff})")
+        )
+        print(
+            f"  Insert direction: {direction} (u_color={u_color_after} -> {u_target}, side_face={side_face_after})"
+        )
 
         # Brute force: find algorithm that inserts this edge
         # Use moves involving the side face, its neighbor, and U
@@ -153,7 +181,9 @@ for attempt in range(20):
         edge_positions = MIDDLE_EDGES[target_edge]
         target_colors = MIDDLE_EDGE_TARGETS[target_edge]
 
-        print(f"  Target: {edge_positions[0][0]}[{edge_positions[0][1]}]={target_colors[0]}, {edge_positions[1][0]}[{edge_positions[1][1]}]={target_colors[1]}")
+        print(
+            f"  Target: {edge_positions[0][0]}[{edge_positions[0][1]}]={target_colors[0]}, {edge_positions[1][0]}[{edge_positions[1][1]}]={target_colors[1]}"
+        )
 
         found = []
         for length in range(4, 10):
@@ -161,7 +191,7 @@ for attempt in range(20):
                 # Skip consecutive same-face moves
                 skip = False
                 for i in range(len(combo) - 1):
-                    if combo[i][0] == combo[i+1][0]:
+                    if combo[i][0] == combo[i + 1][0]:
                         skip = True
                         break
                 if skip:
@@ -194,6 +224,6 @@ for attempt in range(20):
                 break
 
         if not found:
-            print(f"  NO SOLUTION FOUND!")
+            print("  NO SOLUTION FOUND!")
 
     break  # Just test first valid state

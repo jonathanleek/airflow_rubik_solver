@@ -51,8 +51,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # PART 1: Build SageMath-verified reference model
 # ============================================================================
 
-FACES = ['U', 'D', 'F', 'B', 'L', 'R']
-COLORS = {'U': 'Y', 'D': 'W', 'F': 'G', 'B': 'B', 'L': 'O', 'R': 'R'}
+FACES = ["U", "D", "F", "B", "L", "R"]
+COLORS = {"U": "Y", "D": "W", "F": "G", "B": "B", "L": "O", "R": "R"}
 
 
 def idx(face, pos):
@@ -87,37 +87,118 @@ SAGE_TO_OURS = {}
 
 # U face: sage 1-8 (no center) -> our U[0]-U[8] (skip U[4]=center)
 for sage_i, our_pos in [(1, 0), (2, 1), (3, 2), (4, 3), (5, 5), (6, 6), (7, 7), (8, 8)]:
-    SAGE_TO_OURS[sage_i] = idx('U', our_pos)
+    SAGE_TO_OURS[sage_i] = idx("U", our_pos)
 
 # L face: sage 9-16 -> our L[0]-L[8]
-for sage_i, our_pos in [(9, 0), (10, 1), (11, 2), (12, 3), (13, 5), (14, 6), (15, 7), (16, 8)]:
-    SAGE_TO_OURS[sage_i] = idx('L', our_pos)
+for sage_i, our_pos in [
+    (9, 0),
+    (10, 1),
+    (11, 2),
+    (12, 3),
+    (13, 5),
+    (14, 6),
+    (15, 7),
+    (16, 8),
+]:
+    SAGE_TO_OURS[sage_i] = idx("L", our_pos)
 
 # F face: sage 17-24 -> our F[0]-F[8]
-for sage_i, our_pos in [(17, 0), (18, 1), (19, 2), (20, 3), (21, 5), (22, 6), (23, 7), (24, 8)]:
-    SAGE_TO_OURS[sage_i] = idx('F', our_pos)
+for sage_i, our_pos in [
+    (17, 0),
+    (18, 1),
+    (19, 2),
+    (20, 3),
+    (21, 5),
+    (22, 6),
+    (23, 7),
+    (24, 8),
+]:
+    SAGE_TO_OURS[sage_i] = idx("F", our_pos)
 
 # R face: sage 25-32 -> our R[0]-R[8]
-for sage_i, our_pos in [(25, 0), (26, 1), (27, 2), (28, 3), (29, 5), (30, 6), (31, 7), (32, 8)]:
-    SAGE_TO_OURS[sage_i] = idx('R', our_pos)
+for sage_i, our_pos in [
+    (25, 0),
+    (26, 1),
+    (27, 2),
+    (28, 3),
+    (29, 5),
+    (30, 6),
+    (31, 7),
+    (32, 8),
+]:
+    SAGE_TO_OURS[sage_i] = idx("R", our_pos)
 
 # B face: sage 33-40 -> our B[0]-B[8]
-for sage_i, our_pos in [(33, 0), (34, 1), (35, 2), (36, 3), (37, 5), (38, 6), (39, 7), (40, 8)]:
-    SAGE_TO_OURS[sage_i] = idx('B', our_pos)
+for sage_i, our_pos in [
+    (33, 0),
+    (34, 1),
+    (35, 2),
+    (36, 3),
+    (37, 5),
+    (38, 6),
+    (39, 7),
+    (40, 8),
+]:
+    SAGE_TO_OURS[sage_i] = idx("B", our_pos)
 
 # D face: sage 41-48 -> our D[0]-D[8]
-for sage_i, our_pos in [(41, 0), (42, 1), (43, 2), (44, 3), (45, 5), (46, 6), (47, 7), (48, 8)]:
-    SAGE_TO_OURS[sage_i] = idx('D', our_pos)
+for sage_i, our_pos in [
+    (41, 0),
+    (42, 1),
+    (43, 2),
+    (44, 3),
+    (45, 5),
+    (46, 6),
+    (47, 7),
+    (48, 8),
+]:
+    SAGE_TO_OURS[sage_i] = idx("D", our_pos)
 
 
 # SageMath move definitions (each move = list of cycles in sage numbering)
 SAGE_MOVES = {
-    'R': [(3, 38, 43, 19), (5, 36, 45, 21), (8, 33, 48, 24), (25, 27, 32, 30), (26, 29, 31, 28)],
-    'L': [(1, 17, 41, 40), (4, 20, 44, 37), (6, 22, 46, 35), (9, 11, 16, 14), (10, 13, 15, 12)],
-    'U': [(1, 3, 8, 6), (2, 5, 7, 4), (9, 33, 25, 17), (10, 34, 26, 18), (11, 35, 27, 19)],
-    'D': [(14, 22, 30, 38), (15, 23, 31, 39), (16, 24, 32, 40), (41, 43, 48, 46), (42, 45, 47, 44)],
-    'F': [(6, 25, 43, 16), (7, 28, 42, 13), (8, 30, 41, 11), (17, 19, 24, 22), (18, 21, 23, 20)],
-    'B': [(1, 14, 48, 27), (2, 12, 47, 29), (3, 9, 46, 32), (33, 35, 40, 38), (34, 37, 39, 36)],
+    "R": [
+        (3, 38, 43, 19),
+        (5, 36, 45, 21),
+        (8, 33, 48, 24),
+        (25, 27, 32, 30),
+        (26, 29, 31, 28),
+    ],
+    "L": [
+        (1, 17, 41, 40),
+        (4, 20, 44, 37),
+        (6, 22, 46, 35),
+        (9, 11, 16, 14),
+        (10, 13, 15, 12),
+    ],
+    "U": [
+        (1, 3, 8, 6),
+        (2, 5, 7, 4),
+        (9, 33, 25, 17),
+        (10, 34, 26, 18),
+        (11, 35, 27, 19),
+    ],
+    "D": [
+        (14, 22, 30, 38),
+        (15, 23, 31, 39),
+        (16, 24, 32, 40),
+        (41, 43, 48, 46),
+        (42, 45, 47, 44),
+    ],
+    "F": [
+        (6, 25, 43, 16),
+        (7, 28, 42, 13),
+        (8, 30, 41, 11),
+        (17, 19, 24, 22),
+        (18, 21, 23, 20),
+    ],
+    "B": [
+        (1, 14, 48, 27),
+        (2, 12, 47, 29),
+        (3, 9, 46, 32),
+        (33, 35, 40, 38),
+        (34, 37, 39, 36),
+    ],
 }
 
 
@@ -163,7 +244,7 @@ def build_reference_moves():
         moves[move_name] = build_perm_from_sage(sage_cycles)
 
     # Build inverse (CCW) and double moves
-    for face in ['R', 'L', 'U', 'D', 'F', 'B']:
+    for face in ["R", "L", "U", "D", "F", "B"]:
         cw = moves[face]
         # Inverse = CW applied 3 times
         ccw = compose(cw, compose(cw, cw))
@@ -178,39 +259,44 @@ def build_reference_moves():
 # PART 2: Compare reference vs project model
 # ============================================================================
 
+
 def compare_moves(ref_moves, proj_moves):
     """Compare reference and project move permutations element by element."""
     total_diffs = 0
     move_results = {}
 
-    for move_name in ['R', 'L', 'U', 'D', 'F', 'B']:
+    for move_name in ["R", "L", "U", "D", "F", "B"]:
         ref = ref_moves[move_name]
         proj = proj_moves[move_name]
 
         diffs = []
         for i in range(54):
             if ref[i] != proj[i]:
-                diffs.append({
-                    'index': i,
-                    'dst': sticker_label(i),
-                    'ref_src': sticker_label(ref[i]),
-                    'proj_src': sticker_label(proj[i]),
-                })
+                diffs.append(
+                    {
+                        "index": i,
+                        "dst": sticker_label(i),
+                        "ref_src": sticker_label(ref[i]),
+                        "proj_src": sticker_label(proj[i]),
+                    }
+                )
 
         total_diffs += len(diffs)
 
         # Categorize: face-only vs adjacent-only vs both
         if diffs:
             face_base = FACES.index(move_name) * 9
-            face_diffs = [d for d in diffs if face_base <= d['index'] < face_base + 9]
-            adj_diffs = [d for d in diffs if not (face_base <= d['index'] < face_base + 9)]
+            face_diffs = [d for d in diffs if face_base <= d["index"] < face_base + 9]
+            adj_diffs = [
+                d for d in diffs if not (face_base <= d["index"] < face_base + 9)
+            ]
             move_results[move_name] = {
-                'diffs': diffs,
-                'face_diffs': face_diffs,
-                'adj_diffs': adj_diffs,
+                "diffs": diffs,
+                "face_diffs": face_diffs,
+                "adj_diffs": adj_diffs,
             }
         else:
-            move_results[move_name] = {'diffs': [], 'face_diffs': [], 'adj_diffs': []}
+            move_results[move_name] = {"diffs": [], "face_diffs": [], "adj_diffs": []}
 
     return total_diffs, move_results
 
@@ -248,6 +334,7 @@ def get_perm_cycles(perm):
 # MAIN
 # ============================================================================
 
+
 def main():
     print("=" * 70)
     print("REFERENCE COMPARISON TEST")
@@ -266,18 +353,20 @@ def main():
     # -----------------------------------------------------------------------
     print("\n--- Reference model sanity checks ---")
     ref_ok = True
-    for face in ['R', 'L', 'U', 'D', 'F', 'B']:
+    for face in ["R", "L", "U", "D", "F", "B"]:
         p = ref_moves[face]
         p4 = compose(p, compose(p, compose(p, p)))
-        ok = (p4 == identity)
+        ok = p4 == identity
         if not ok:
             ref_ok = False
         mm_inv = compose(ref_moves[face], ref_moves[face + "'"])
-        inv_ok = (mm_inv == identity)
+        inv_ok = mm_inv == identity
         if not inv_ok:
             ref_ok = False
         status = "OK" if (ok and inv_ok) else "FAIL"
-        print(f"  {face}^4=I: {'OK' if ok else 'FAIL'},  {face}*{face}'=I: {'OK' if inv_ok else 'FAIL'}")
+        print(
+            f"  {face}^4=I: {'OK' if ok else 'FAIL'},  {face}*{face}'=I: {'OK' if inv_ok else 'FAIL'}"
+        )
 
     if ref_ok:
         print("  All reference sanity checks PASSED.")
@@ -287,50 +376,62 @@ def main():
     # -----------------------------------------------------------------------
     # Compare basic moves
     # -----------------------------------------------------------------------
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("BASIC MOVE COMPARISON (6 CW moves)")
     print("=" * 70)
 
     total_diffs, move_results = compare_moves(ref_moves, proj_perms)
 
-    for move_name in ['R', 'L', 'U', 'D', 'F', 'B']:
+    for move_name in ["R", "L", "U", "D", "F", "B"]:
         result = move_results[move_name]
-        diffs = result['diffs']
-        face_diffs = result['face_diffs']
-        adj_diffs = result['adj_diffs']
+        diffs = result["diffs"]
+        face_diffs = result["face_diffs"]
+        adj_diffs = result["adj_diffs"]
 
         if not diffs:
             print(f"\n  {move_name} move: CORRECT (0 differences)")
             continue
 
         print(f"\n  {move_name} move: {len(diffs)} DIFFERENCES")
-        print(f"  {'Position':<12} {'Reference (correct)':<25} {'Project (actual)':<25}")
-        print(f"  {'-'*12} {'-'*25} {'-'*25}")
+        print(
+            f"  {'Position':<12} {'Reference (correct)':<25} {'Project (actual)':<25}"
+        )
+        print(f"  {'-' * 12} {'-' * 25} {'-' * 25}")
         for d in diffs:
-            print(f"  {d['dst']:<12} pulls from {d['ref_src']:<15} pulls from {d['proj_src']:<15}")
+            print(
+                f"  {d['dst']:<12} pulls from {d['ref_src']:<15} pulls from {d['proj_src']:<15}"
+            )
 
         # Diagnosis
         if face_diffs and not adj_diffs:
             print(f"\n  DIAGNOSIS: {move_name} FACE ROTATION is WRONG DIRECTION")
-            print(f"    Adjacent sticker cycles are correct.")
-            print(f"    The {move_name} face stickers rotate CCW instead of CW (or vice versa).")
+            print("    Adjacent sticker cycles are correct.")
+            print(
+                f"    The {move_name} face stickers rotate CCW instead of CW (or vice versa)."
+            )
         elif adj_diffs and not face_diffs:
-            print(f"\n  DIAGNOSIS: {move_name} ADJACENT STICKER CYCLES are WRONG DIRECTION")
-            print(f"    Face rotation is correct.")
-            print(f"    The adjacent stickers cycle in the opposite direction from correct.")
+            print(
+                f"\n  DIAGNOSIS: {move_name} ADJACENT STICKER CYCLES are WRONG DIRECTION"
+            )
+            print("    Face rotation is correct.")
+            print(
+                "    The adjacent stickers cycle in the opposite direction from correct."
+            )
         else:
             print(f"\n  DIAGNOSIS: BOTH face rotation ({len(face_diffs)} diffs) and")
-            print(f"    adjacent cycles ({len(adj_diffs)} diffs) are wrong for {move_name}.")
+            print(
+                f"    adjacent cycles ({len(adj_diffs)} diffs) are wrong for {move_name}."
+            )
 
     # -----------------------------------------------------------------------
     # Compare derived moves
     # -----------------------------------------------------------------------
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("DERIVED MOVE COMPARISON (primes and doubles)")
     print("=" * 70)
 
     for suffix in ["'", "2"]:
-        for face in ['R', 'L', 'U', 'D', 'F', 'B']:
+        for face in ["R", "L", "U", "D", "F", "B"]:
             move_name = face + suffix
             ref = ref_moves[move_name]
             proj = proj_perms[move_name]
@@ -341,7 +442,7 @@ def main():
     # -----------------------------------------------------------------------
     # T-perm order test
     # -----------------------------------------------------------------------
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("T-PERM ORDER TEST: R U R' U' R' F R2 U' R' U' R U R' F'")
     print("=" * 70)
 
@@ -356,15 +457,15 @@ def main():
     ref_t_order = compute_order(ref_t)
     ref_t_cycles = get_perm_cycles(ref_t)
 
-    print(f"\n  Reference model:")
+    print("\n  Reference model:")
     print(f"    Order: {ref_t_order} (expected: 2)")
     if ref_t_cycles:
-        print(f"    Cycles:")
+        print("    Cycles:")
         for cycle in ref_t_cycles:
             labels = [sticker_label(x) for x in cycle]
             print(f"      ({len(cycle)}-cycle) {' <-> '.join(labels)}")
     else:
-        print(f"    No cycles (identity)")
+        print("    No cycles (identity)")
 
     # Project T-perm
     proj_t = identity[:]
@@ -374,7 +475,7 @@ def main():
     proj_t_order = compute_order(proj_t)
     proj_t_cycles = get_perm_cycles(proj_t)
 
-    print(f"\n  Project model:")
+    print("\n  Project model:")
     print(f"    Order: {proj_t_order} (expected: 2)")
     if proj_t_cycles:
         print(f"    Cycles ({len(proj_t_cycles)} total):")
@@ -383,14 +484,14 @@ def main():
             print(f"      ({len(cycle)}-cycle) {' -> '.join(labels)}")
 
     if ref_t_order == 2:
-        print(f"\n  REFERENCE IS CORRECT: T-perm order = 2")
+        print("\n  REFERENCE IS CORRECT: T-perm order = 2")
     if proj_t_order != 2:
         print(f"  PROJECT IS WRONG: T-perm order = {proj_t_order}, should be 2")
 
     # -----------------------------------------------------------------------
     # Additional algorithm order tests
     # -----------------------------------------------------------------------
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("ADDITIONAL ALGORITHM ORDER TESTS")
     print("=" * 70)
 
@@ -416,26 +517,32 @@ def main():
         proj_ord = compute_order(proj_p)
 
         expected_str = str(expected_order) if expected_order else "N/A"
-        ref_ok = "OK" if (expected_order and ref_ord == expected_order) else str(ref_ord)
-        proj_ok = "OK" if (expected_order and proj_ord == expected_order) else str(proj_ord)
+        ref_ok = (
+            "OK" if (expected_order and ref_ord == expected_order) else str(ref_ord)
+        )
+        proj_ok = (
+            "OK" if (expected_order and proj_ord == expected_order) else str(proj_ord)
+        )
 
         print(f"\n  {name}")
         print(f"    Algorithm: {alg}")
-        print(f"    Expected: {expected_str}  |  Reference: {ref_ok}  |  Project: {proj_ok}")
+        print(
+            f"    Expected: {expected_str}  |  Reference: {ref_ok}  |  Project: {proj_ok}"
+        )
         if ref_ord != proj_ord:
             print(f"    MISMATCH: reference={ref_ord}, project={proj_ord}")
 
     # -----------------------------------------------------------------------
     # Root cause summary
     # -----------------------------------------------------------------------
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("ROOT CAUSE SUMMARY")
     print("=" * 70)
 
     buggy_moves = []
-    for move_name in ['R', 'L', 'U', 'D', 'F', 'B']:
+    for move_name in ["R", "L", "U", "D", "F", "B"]:
         result = move_results[move_name]
-        if result['diffs']:
+        if result["diffs"]:
             buggy_moves.append(move_name)
 
     if not buggy_moves:
@@ -447,15 +554,15 @@ def main():
 
         for move_name in buggy_moves:
             result = move_results[move_name]
-            face_count = len(result['face_diffs'])
-            adj_count = len(result['adj_diffs'])
+            face_count = len(result["face_diffs"])
+            adj_count = len(result["adj_diffs"])
             print(f"  {move_name} move ({len(result['diffs'])} diffs):")
             if face_count and not adj_count:
-                print(f"    - Face rotation: WRONG (reversed direction)")
-                print(f"    - Adjacent stickers: correct")
+                print("    - Face rotation: WRONG (reversed direction)")
+                print("    - Adjacent stickers: correct")
             elif adj_count and not face_count:
-                print(f"    - Face rotation: correct")
-                print(f"    - Adjacent stickers: WRONG (reversed direction)")
+                print("    - Face rotation: correct")
+                print("    - Adjacent stickers: WRONG (reversed direction)")
             else:
                 print(f"    - Face rotation: WRONG ({face_count} diffs)")
                 print(f"    - Adjacent stickers: WRONG ({adj_count} diffs)")
@@ -463,7 +570,7 @@ def main():
         print()
         print("  In cube.py, the _rotate_face_cw function groups faces as:")
         print('    if face in ("D", "L"):    # pattern A (0->6->8->2)')
-        print('    else (U, F, R, B):        # pattern B (0->2->8->6)')
+        print("    else (U, F, R, B):        # pattern B (0->2->8->6)")
         print()
         print("  CORRECT grouping (verified against SageMath):")
         print("    ALL faces should use pattern B: 0->2->8->6->0, 1->5->7->3->1")
@@ -485,10 +592,10 @@ def main():
         print("      To:     ALL faces use [b+0,b+2,b+8,b+6], [b+1,b+5,b+7,b+3]")
         print()
         print("    FIX 2 - U adjacent cycles: reverse the direction.")
-        print('      Change: [F0,R0,B0,L0] to [F0,L0,B0,R0]  (and same for 1,2)')
+        print("      Change: [F0,R0,B0,L0] to [F0,L0,B0,R0]  (and same for 1,2)")
         print()
         print("    FIX 3 - D adjacent cycles: reverse the direction.")
-        print('      Change: [F6,L6,B6,R6] to [F6,R6,B6,L6]  (and same for 7,8)')
+        print("      Change: [F6,L6,B6,R6] to [F6,R6,B6,L6]  (and same for 7,8)")
 
 
 if __name__ == "__main__":
