@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rubik Solver</title>
+  <link rel="stylesheet" href="static/styles.css" />
+</head>
+<body>
+  <main>
+    <header class="header">
+      <div>
+        <h1>Rubik Solver</h1>
+        <p id="summary">Loading solver state...</p>
+      </div>
+      <form id="start-form" class="start-form">
+        <input id="scramble" type="text" placeholder="Optional scramble, e.g. R U R' F2" />
+        <input id="start-key" type="password" placeholder="Start key" autocomplete="off" />
+        <button type="submit">Start New Solve</button>
+      </form>
+    </header>
+
+    <section class="panel">
+      <h2>Current Cube</h2>
+      <div id="cube" class="cube-net"></div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>Phase DAGs</h2>
+        <div id="dag-runs" class="dag-runs"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">
+          <h2>State History</h2>
+          <div class="playback-controls">
+            <button id="play-history" type="button">Play</button>
+            <button id="live-view" type="button">Live</button>
+          </div>
+        </div>
+        <div id="history" class="history"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="static/app.js"></script>
+</body>
+</html>
