@@ -1,6 +1,9 @@
 .git
 .env
 .DS_Store
+.astro/config.local.yaml
+.astro/config.local.lock
+.astro/config.lock
 airflow_settings.yaml
 __pycache__/
 astro
