@@ -8,7 +8,7 @@ from include.rubik.state import load_current_state, mark_session_complete
 
 
 @dag(
-    dag_id="rubik_complete",
+    dag_id="rubik_incomplete",
     schedule=None,
     max_active_runs=1,
     catchup=False,
